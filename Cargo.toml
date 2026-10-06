@@ -1,0 +1,24 @@
+# Rust workspace for the Android daemon.
+# Pure-Rust crates; the desktop Tauri app was removed from this tree.
+[workspace]
+resolver = "2"
+members = [
+  "crates/kasumi-core",
+  "crates/kasumi-backend",
+  "crates/kasumi-daemon",
+]
+
+[workspace.package]
+# Placeholder — the real product version is module/module.prop (single source of
+# truth); the desktop bundle gets it via `tauri build --config` (scripts/app-version.sh).
+version = "0.0.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+
+# Smaller, faster release binaries (Tauri's recommended profile).
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

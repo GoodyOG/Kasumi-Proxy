@@ -1,0 +1,50 @@
+[package]
+name = "kasumi-backend"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Transport-neutral orchestration (Platform trait, RPC commands, lifecycle, daemon, HTTP/WS server) — Rust port of packages/backend."
+
+[dependencies]
+specta = { version = "2.0.0-rc.25", features = ["derive"] }
+kasumi-core = { path = "../kasumi-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = [
+    "rt-multi-thread",
+    "macros",
+    "process",
+    "fs",
+    "net",
+    "io-util",
+    "time",
+    "sync",
+    "signal",
+] }
+async-trait = "0.1"
+anyhow = "1"
+log = "0.4"
+regex = "1"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
+reqwest = { version = "0.12", default-features = false, features = [
+    "rustls-tls",
+    "socks",
+    "gzip",
+    "brotli",
+    "deflate",
+] }
+
+# Process identity is OS-specific: POSIX reads /proc + kill(2) (libc); Windows
+# queries the process image path + TerminateProcess (windows-sys). See proc.rs.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_System_Threading",
+] }
+
+[dev-dependencies]
+tempfile = "3"

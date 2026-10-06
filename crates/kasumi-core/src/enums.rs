@@ -1,0 +1,493 @@
+//! Fixed value sets shared across the domain. Each enum maps to an exact wire
+//! string so persisted JSON and share links round-trip unchanged.
+
+use serde::{Deserialize, Serialize};
+
+/// An actual proxy core. Wire value: `"xray"`.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Serialize,
+    Deserialize,
+    strum::EnumIter,
+    specta::Type,
+)]
+#[serde(rename_all = "kebab-case")]
+pub enum CoreEngine {
+    Xray,
+}
+
+/// Which engine bridges the TUN device to the proxy core. `Tun2socks` and `Hev`
+/// are external userspace tun→socks processes in front of the socks-only xray
+/// core. Further engines plug in as new variants. Wire values: `"tun2socks"`,
+/// `"hev"`.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, strum::EnumIter, specta::Type,
+)]
+pub enum TunEngine {
+    #[serde(rename = "tun2socks")]
+    Tun2socks,
+    #[serde(rename = "hev")]
+    Hev,
+}
+
+/// The wire label of a TUN engine — its serde value, the single source. Used as
+/// the on-disk marker that records which engine a running data-path uses, so every
+/// shell (desktop helper, Android daemon) reads/writes one canonical label instead
+/// of hand-maintaining its own match.
+pub fn tun_marker(tun: TunEngine) -> String {
+    serde_json::to_value(tun)
+        .ok()
+        .and_then(|v| v.as_str().map(str::to_owned))
+        .unwrap_or_default()
+}
+
+/// Parse a marker label back to its [`TunEngine`] (`None` for unknown/legacy
+/// labels). Inverse of [`tun_marker`], also serde-driven so the two can't drift.
+pub fn tun_from_marker(s: &str) -> Option<TunEngine> {
+    serde_json::from_value(serde_json::Value::String(s.trim().to_owned())).ok()
+}
+
+/// A per-engine TUN setting. The wire value is the `AdvancedSettings` field it
+/// reads, so the settings UI can show exactly the fields the chosen engine
+/// honours and nothing it would silently ignore.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, strum::EnumIter)]
+pub enum TunKnob {
+    #[serde(rename = "tunConnectTimeoutMs")]
+    ConnectTimeout,
+    #[serde(rename = "tunTcpRwTimeoutMs")]
+    TcpRwTimeout,
+    #[serde(rename = "tunUdpRwTimeoutMs")]
+    UdpRwTimeout,
+    #[serde(rename = "tunTcpBufferSize")]
+    TcpBufferSize,
+    #[serde(rename = "tunUdpRecvBufferSize")]
+    UdpRecvBufferSize,
+}
+
+/// How a [`TunKnob`] is edited: a number, or one of a fixed set of wire values.
+/// The UI renders controls from this, so it needs no per-field knowledge.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(tag = "kind", rename_all = "lowercase")]
+pub enum TunKnobKind {
+    Number,
+    Choice { options: Vec<String> },
+}
+
+impl TunKnob {
+    pub fn kind(self) -> TunKnobKind {
+        match self {
+            TunKnob::ConnectTimeout
+            | TunKnob::TcpRwTimeout
+            | TunKnob::UdpRwTimeout
+            | TunKnob::TcpBufferSize
+            | TunKnob::UdpRecvBufferSize => TunKnobKind::Number,
+        }
+    }
+}
+
+/// The engine-specific settings each TUN engine consumes, beyond the ones every
+/// engine shares (MTU, excluded addresses, strict routing). Must match what the
+/// engine's config builder actually reads: `build_tun2socks_config` takes the UDP
+/// timeout and TCP buffer, `build_hev_config` all five tuning knobs. Exhaustive
+/// match, so a new engine has to declare its own.
+pub fn tun_knobs(tun: TunEngine) -> &'static [TunKnob] {
+    use TunKnob::*;
+    match tun {
+        TunEngine::Tun2socks => &[UdpRwTimeout, TcpBufferSize],
+        TunEngine::Hev => &[
+            ConnectTimeout,
+            TcpRwTimeout,
+            UdpRwTimeout,
+            TcpBufferSize,
+            UdpRecvBufferSize,
+        ],
+    }
+}
+
+/// Stream transport.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    strum::EnumIter,
+    specta::Type,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum Network {
+    #[default]
+    Tcp,
+    Ws,
+    Grpc,
+    Httpupgrade,
+    Xhttp,
+    H2,
+    Kcp,
+    Quic,
+}
+
+/// TLS security mode.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    strum::EnumIter,
+    specta::Type,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum Security {
+    None,
+    #[default]
+    Tls,
+    Reality,
+}
+
+/// uTLS fingerprint. `""` means unset.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    strum::EnumIter,
+    specta::Type,
+)]
+#[serde(rename_all = "lowercase")]
+#[specta(type = String)]
+pub enum Fingerprint {
+    #[serde(rename = "")]
+    Empty,
+    #[default]
+    Chrome,
+    Firefox,
+    Safari,
+    Ios,
+    Android,
+    Edge,
+    #[serde(rename = "360")]
+    N360,
+    Qq,
+    Random,
+    Randomized,
+}
+
+/// VLESS/VMess UDP packet encoding. `""` means unset.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    strum::EnumIter,
+    specta::Type,
+)]
+#[serde(rename_all = "lowercase")]
+#[specta(type = String)]
+pub enum PacketEncoding {
+    #[default]
+    #[serde(rename = "")]
+    Empty,
+    Xudp,
+    Packetaddr,
+}
+
+/// VLESS flow control. `""` means unset.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    strum::EnumIter,
+    specta::Type,
+)]
+#[specta(type = String)]
+pub enum Flow {
+    #[default]
+    #[serde(rename = "")]
+    Empty,
+    #[serde(rename = "xtls-rprx-vision")]
+    Vision,
+    #[serde(rename = "xtls-rprx-vision-udp443")]
+    VisionUdp443,
+}
+
+/// VMess cipher.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    strum::EnumIter,
+    specta::Type,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum VmessEnc {
+    #[default]
+    Auto,
+    #[serde(rename = "aes-128-gcm")]
+    Aes128Gcm,
+    #[serde(rename = "chacha20-poly1305")]
+    Chacha20Poly1305,
+    None,
+    Zero,
+}
+
+/// Fake-packet header obfuscation (mKCP / QUIC).
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    strum::EnumIter,
+    specta::Type,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum HeaderType {
+    #[default]
+    None,
+    Http,
+    Srtp,
+    Utp,
+    #[serde(rename = "wechat-video")]
+    WechatVideo,
+    Dtls,
+    Wireguard,
+    Dns,
+}
+
+/// Shadowsocks cipher (incl. the 2022 AEAD methods).
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, strum::EnumIter, specta::Type,
+)]
+pub enum SsMethod {
+    #[serde(rename = "aes-256-gcm")]
+    Aes256Gcm,
+    #[serde(rename = "aes-128-gcm")]
+    Aes128Gcm,
+    #[serde(rename = "chacha20-poly1305")]
+    Chacha20Poly1305,
+    #[serde(rename = "chacha20-ietf-poly1305")]
+    Chacha20IetfPoly1305,
+    #[serde(rename = "xchacha20-poly1305")]
+    Xchacha20Poly1305,
+    #[serde(rename = "none")]
+    None,
+    #[serde(rename = "plain")]
+    Plain,
+    #[serde(rename = "2022-blake3-aes-128-gcm")]
+    Blake3Aes128Gcm,
+    #[serde(rename = "2022-blake3-aes-256-gcm")]
+    Blake3Aes256Gcm,
+    #[serde(rename = "2022-blake3-chacha20-poly1305")]
+    Blake3Chacha20Poly1305,
+}
+
+/// TUIC / QUIC congestion control.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, strum::EnumIter, specta::Type,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum CongestionControl {
+    Bbr,
+    Cubic,
+    NewReno,
+}
+
+/// Hysteria2 obfuscation. `""` means none.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    Default,
+    strum::EnumIter,
+    specta::Type,
+)]
+#[serde(rename_all = "lowercase")]
+#[specta(type = String)]
+pub enum Hysteria2Obfs {
+    #[default]
+    #[serde(rename = "")]
+    Empty,
+    Salamander,
+}
+
+/// One enum variant's wire string, read from its `Serialize` output so callers
+/// never restate a value the enum already defines.
+pub fn wire_value<T: Serialize>(v: &T) -> String {
+    serde_json::to_value(v)
+        .ok()
+        .and_then(|x| x.as_str().map(str::to_owned))
+        .unwrap_or_default()
+}
+
+/// Wire-string values of an enum in declaration order, for UI dropdowns.
+fn wire_values<T: strum::IntoEnumIterator + Serialize>() -> Vec<String> {
+    T::iter().map(|v| wire_value(&v)).collect()
+}
+
+/// Editor dropdown option lists, keyed by the generated TS const name. The
+/// single source for the frontend's protocol/transport/security `<Select>`s
+/// (emitted to `frontend/src/generated/defaults.ts`).
+pub fn editor_option_lists() -> Vec<(&'static str, Vec<String>)> {
+    use crate::contract::LogTarget;
+    use crate::profile::Protocol;
+    use crate::state::RoutingMode;
+    vec![
+        ("PROTOCOL_OPTS", wire_values::<Protocol>()),
+        ("ROUTING_MODE_OPTS", wire_values::<RoutingMode>()),
+        ("CORE_ENGINE_OPTS", wire_values::<CoreEngine>()),
+        ("TUN_ENGINE_OPTS", wire_values::<TunEngine>()),
+        ("LOG_TARGET_OPTS", wire_values::<LogTarget>()),
+        ("NETWORK_OPTS", wire_values::<Network>()),
+        ("SECURITY_OPTS", wire_values::<Security>()),
+        ("HEADER_TYPE_OPTS", wire_values::<HeaderType>()),
+        ("VMESS_ENC_OPTS", wire_values::<VmessEnc>()),
+        ("SS_METHOD_OPTS", wire_values::<SsMethod>()),
+        ("CONGESTION_OPTS", wire_values::<CongestionControl>()),
+        ("FINGERPRINT_OPTS", wire_values::<Fingerprint>()),
+        ("FLOW_OPTS", wire_values::<Flow>()),
+        ("PACKET_ENCODING_OPTS", wire_values::<PacketEncoding>()),
+        ("HYSTERIA2_OBFS_OPTS", wire_values::<Hysteria2Obfs>()),
+    ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use strum::IntoEnumIterator;
+
+    fn wire<T: Serialize>(v: &T) -> String {
+        serde_json::to_string(v).unwrap()
+    }
+
+    #[test]
+    fn engine_selection_values() {
+        assert_eq!(wire(&CoreEngine::Xray), "\"xray\"");
+    }
+
+    #[test]
+    fn tun_engine_values() {
+        assert_eq!(wire(&TunEngine::Tun2socks), "\"tun2socks\"");
+        assert_eq!(wire(&TunEngine::Hev), "\"hev\"");
+    }
+
+    #[test]
+    fn tun_marker_round_trips() {
+        for e in TunEngine::iter() {
+            assert_eq!(tun_from_marker(&tun_marker(e)), Some(e));
+        }
+        // Marker equals the serde wire value (single source).
+        assert_eq!(tun_marker(TunEngine::Tun2socks), "tun2socks");
+        // Unknown/legacy labels don't resolve.
+        assert_eq!(tun_from_marker("nope"), None);
+        assert_eq!(tun_from_marker(""), None);
+        // Legacy sing-box label no longer resolves.
+        assert_eq!(tun_from_marker("singbox-tun"), None);
+    }
+
+    #[test]
+    fn tun_knobs_name_real_settings_fields() {
+        use strum::IntoEnumIterator;
+        // Each knob's wire value must be a serialized `AdvancedSettings` field, or
+        // the UI would render a control bound to nothing.
+        let settings = serde_json::to_value(crate::state::AdvancedSettings::default()).unwrap();
+        for knob in TunKnob::iter() {
+            let field = wire_value(&knob);
+            assert!(
+                settings.get(&field).is_some(),
+                "{field} is not a settings field"
+            );
+        }
+    }
+
+    #[test]
+    fn tun_knobs_per_engine() {
+        assert_eq!(
+            tun_knobs(TunEngine::Tun2socks),
+            &[TunKnob::UdpRwTimeout, TunKnob::TcpBufferSize]
+        );
+        assert_eq!(tun_knobs(TunEngine::Hev).len(), 5);
+    }
+
+    #[test]
+    fn tun_knob_kinds() {
+        assert_eq!(
+            serde_json::to_value(TunKnob::TcpBufferSize.kind()).unwrap(),
+            serde_json::json!({ "kind": "number" })
+        );
+    }
+
+    #[test]
+    fn network_and_security() {
+        assert_eq!(wire(&Network::Httpupgrade), "\"httpupgrade\"");
+        assert_eq!(wire(&Network::Xhttp), "\"xhttp\"");
+        assert_eq!(wire(&Network::H2), "\"h2\"");
+        assert_eq!(Network::default(), Network::Tcp);
+        assert_eq!(wire(&Security::None), "\"none\"");
+        assert_eq!(Security::default(), Security::Tls);
+    }
+
+    #[test]
+    fn empty_and_digit_variants() {
+        assert_eq!(wire(&Fingerprint::Empty), "\"\"");
+        assert_eq!(wire(&Fingerprint::N360), "\"360\"");
+        assert_eq!(wire(&Fingerprint::Chrome), "\"chrome\"");
+        assert_eq!(Fingerprint::default(), Fingerprint::Chrome);
+        assert_eq!(
+            serde_json::from_str::<Fingerprint>("\"\"").unwrap(),
+            Fingerprint::Empty
+        );
+        assert_eq!(wire(&PacketEncoding::Empty), "\"\"");
+        assert_eq!(wire(&Hysteria2Obfs::Empty), "\"\"");
+    }
+
+    #[test]
+    fn dashed_values() {
+        assert_eq!(wire(&Flow::Vision), "\"xtls-rprx-vision\"");
+        assert_eq!(wire(&Flow::VisionUdp443), "\"xtls-rprx-vision-udp443\"");
+        assert_eq!(wire(&HeaderType::WechatVideo), "\"wechat-video\"");
+        assert_eq!(wire(&VmessEnc::Aes128Gcm), "\"aes-128-gcm\"");
+        assert_eq!(
+            wire(&SsMethod::Blake3Chacha20Poly1305),
+            "\"2022-blake3-chacha20-poly1305\""
+        );
+        assert_eq!(wire(&CongestionControl::NewReno), "\"new_reno\"");
+    }
+}

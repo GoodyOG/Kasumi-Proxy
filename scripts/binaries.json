@@ -1,0 +1,72 @@
+{
+  "_comment": "Single source of truth for the release-asset layout of the prebuilt proxy cores (xray / tun2socks / hev-socks5-tunnel). Read by scripts/fetch-binaries.sh (jq). Versions live in scripts/binary-versions.sh (keyed by version_var). URL = https://github.com/<repo>/releases/download/<TAG>/<file>, where TAG is the version_var value and {ver} expands to TAG without the leading 'v'. member is the binary's name inside the archive (a glob; the extractor also matches member.exe on Windows); archive 'raw' means the asset IS the binary (no archive, member unused).",
+  "xray": {
+    "repo": "XTLS/Xray-core",
+    "version_var": "XRAY_VERSION",
+    "member": "xray",
+    "assets": {
+      "linux-amd64": {
+        "file": "Xray-linux-64.zip",
+        "archive": "zip"
+      },
+      "windows-amd64": {
+        "file": "Xray-windows-64.zip",
+        "archive": "zip"
+      },
+      "android-arm64": {
+        "file": "Xray-android-arm64-v8a.zip",
+        "archive": "zip"
+      },
+      "android-amd64": {
+        "file": "Xray-android-amd64.zip",
+        "archive": "zip"
+      }
+    }
+  },
+  "tun2socks": {
+    "repo": "xjasonlyu/tun2socks",
+    "version_var": "TUN2SOCKS_VERSION",
+    "member": "tun2socks*",
+    "assets": {
+      "linux-amd64": {
+        "file": "tun2socks-linux-amd64.zip",
+        "archive": "zip"
+      },
+      "windows-amd64": {
+        "file": "tun2socks-windows-amd64.zip",
+        "archive": "zip"
+      },
+      "android-arm64": {
+        "file": "tun2socks-linux-arm64.zip",
+        "archive": "zip"
+      },
+      "android-amd64": {
+        "file": "tun2socks-linux-amd64.zip",
+        "archive": "zip"
+      }
+    }
+  },
+  "hev-socks5-tunnel": {
+    "repo": "heiher/hev-socks5-tunnel",
+    "version_var": "HEV_VERSION",
+    "member": "hev-socks5-tunnel",
+    "assets": {
+      "linux-amd64": {
+        "file": "hev-socks5-tunnel-linux-x86_64",
+        "archive": "raw"
+      },
+      "windows-amd64": {
+        "file": "hev-socks5-tunnel-win64.zip",
+        "archive": "zip"
+      },
+      "android-arm64": {
+        "file": "hev-socks5-tunnel-linux-arm64",
+        "archive": "raw"
+      },
+      "android-amd64": {
+        "file": "hev-socks5-tunnel-linux-x86_64",
+        "archive": "raw"
+      }
+    }
+  }
+}

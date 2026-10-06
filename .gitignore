@@ -1,0 +1,57 @@
+# ── Release-time build artifacts (produced by scripts/) ──────────
+# Cores + geodat2srs fetched/built by fetch-binaries.sh android + the kasumi-proxy
+# daemon built by build-daemon-android.sh — track only the docs/licenses.
+module/bin/*
+!module/bin/README.md
+!module/bin/licenses/
+!module/bin/licenses/*
+
+# Production webroot built by build-webroot.sh.
+module/webroot/*
+
+# Desktop binaries fetched/built by fetch-binaries.sh desktop for bundle.externalBin.
+src-tauri/binaries/
+
+# ── Node / Vite ──────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+# tsc -b incremental build cache (per-package, machine-specific)
+*.tsbuildinfo
+coverage/
+.npm/
+package-lock.json
+
+# ── Release artifacts ────────────────────────────────────────────
+build/
+dist/
+*.zip
+
+# ── Local build cache ────────────────────────────────────────────
+.cache/
+
+# ── Rust / Cargo ─────────────────────────────────────────────────
+/target/
+
+# ── Nix / direnv ─────────────────────────────────────────────────
+.direnv/
+result
+
+# ── Tooling / editors / OS ───────────────────────────────────────
+.ralph/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ── Local logs / scratch ─────────────────────────────────────────
+*.log
+*.tmp
+*.swp
+*.swo
+*.orig
+*.rej
+*.bak
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

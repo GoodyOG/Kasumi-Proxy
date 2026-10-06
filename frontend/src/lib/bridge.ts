@@ -1,0 +1,201 @@
+// ============================================================
+// src/lib/bridge.ts
+// The bridge contract the UI talks to: domain types, the `Bridge`
+// interface, and the response parsers shared by implementations.
+// Concrete impls live in ws-bridge.ts (device, WebSocket RPC) /
+// mock-bridge.ts (dev); bridge-provider.ts picks one. Swapping the
+// impl never touches a screen.
+// ============================================================
+import type {
+  AssetsUpdatedEvent,
+  Capabilities,
+  CoreResolution,
+  FetchMode,
+  LogTarget,
+  Profile,
+  RunState,
+  SubAppliedEvent,
+  TestKind,
+  ServiceStatus as WireServiceStatus,
+} from "../generated/bindings";
+
+// Domain and wire-contract types come from the Rust-generated bindings (single
+// source of truth shared with the daemon). The `_Serialize` variants are the
+// concrete all-fields-present shapes the UI holds in memory.
+export type {
+  AdvancedSettings_Serialize as AdvancedSettings,
+  AssetFile,
+  AssetsUpdatedEvent,
+  Capabilities,
+  CoreResolution,
+  Group,
+  LogTarget,
+  MutationIntent_Serialize as MutationIntent,
+  RoutingRule,
+  SubAppliedEvent,
+  Subscription_Serialize as Subscription,
+  TestKind,
+} from "../generated/bindings";
+
+import type { AppState_Serialize, MutationIntent_Serialize } from "../generated/bindings";
+
+// The persisted app state as the UI holds it. `schemaVersion` is an on-disk
+// migration detail owned by the Rust read path, so the frontend neither tracks
+// nor writes it (the backend stamps it).
+export type AppState = Omit<AppState_Serialize, "schemaVersion">;
+
+/** The five truthful run states the UI renders (see Rust `RunState`):
+ *  stopped · connecting · connected · noInternet · failed. */
+export type ServiceState = RunState;
+
+/** Whether the data-path is up (a live core / SOCKS exists): any state except the
+ *  two terminal ones. Use for "stop if running" / "fetch through the core" guards —
+ *  distinct from `=== "connected"`, which is "actually reaching the internet". */
+export const isServiceUp = (s: ServiceState): boolean => s !== "stopped" && s !== "failed";
+
+export interface AppEntry {
+  pkg: string;
+  uid: number;
+  system: boolean;
+  label?: string;
+  iconUrl?: string;
+  /** Desktop: the program the launcher runs (the filter matches it by process). */
+  exe?: string;
+}
+
+/** ServiceStatus as screens consume it — keeps `error`, the reason carried by
+ *  `failed` (couldn't start) and `noInternet` (up but no connectivity).
+ *  `pendingRestart` and `latencyMs` are always concrete here (the parser defaults
+ *  them), even though older senders may omit them on the wire. */
+export interface ServiceStatus extends Omit<WireServiceStatus, "state"> {
+  state: ServiceState;
+  pendingRestart: boolean;
+  latencyMs: number | null;
+}
+
+export type ResourceUpdateMode = FetchMode;
+
+export type BatchProgress = (profileId: string, value: number) => void;
+
+export interface Bridge {
+  // service control
+  start(profileId: string): Promise<ServiceStatus>;
+  stop(): Promise<ServiceStatus>;
+  restart(): Promise<ServiceStatus>;
+  status(): Promise<ServiceStatus>;
+  onStatus(cb: (s: ServiceStatus) => void): () => void; // live stream → unsubscribe
+  capabilities(): Promise<Capabilities>;
+
+  // diagnostics. The daemon owns ports AND concurrency: each call just names a
+  // profile, the daemon leases its own port and bounds how many probe cores run at
+  // once (the pingConcurrency/speedConcurrency setting). A batch is simply many
+  // per-profile calls fired together; `*All` is a thin helper that does that and
+  // streams each result via `onResult` as it resolves.
+  ping(profileId: string): Promise<number>;
+  pingAll(ids: string[], onResult?: BatchProgress): Promise<Record<string, number>>;
+  realPing(profileId: string): Promise<number>;
+  realPingAll(ids: string[], onResult?: BatchProgress): Promise<Record<string, number>>;
+  // One connectivity check through the running core (not a test core): the live
+  // path's round trip in ms, -1 when unreachable or nothing is running.
+  probeConnection(): Promise<number>;
+  speedTest(profileId: string): Promise<number>; // bytes/sec, -1 = unreachable
+  speedTestAll(ids: string[], onResult?: BatchProgress): Promise<Record<string, number>>;
+  log(input?: { target?: LogTarget; lines?: number }): Promise<string>;
+  // The retained core log of a profile's last failed real-ping / speed-test, so the
+  // UI can open the reason behind an `err`. Empty when the test passed or never ran.
+  testLog(profileId: string, kind: TestKind): Promise<string>;
+  clearLogs(): Promise<{ ok: boolean; error?: string }>;
+
+  // persistence (source of truth lives in module files, not localStorage)
+  readState(): Promise<AppState>;
+  // The single write path: dispatch one domain intent; the backend applies it,
+  // enforces invariants, persists, and returns the new canonical state the UI
+  // renders. No full-state shipping, no local invariant logic. Bulk replaces
+  // (one-time client migration on hydrate, file backup restore) use the
+  // `replaceState` / `importBackup` intents — there is no separate writeState.
+  mutate(intent: MutationIntent_Serialize): Promise<AppState>;
+
+  // subscriptions
+  fetchSubscription(
+    url: string,
+    opts?: { userAgent?: string; allowInsecure?: boolean; mode?: ResourceUpdateMode },
+  ): Promise<Profile[]>;
+
+  // Fetch one subscription and apply it server-side (fetch + map + dedup + apply,
+  // restarting the active data-path when affected), returning the new persisted
+  // state. Soft failures are recorded as the subscription's `lastError` in the
+  // returned state; the UI reloads from it instead of running the apply locally.
+  applySubscription(subId: string): Promise<AppState>;
+
+  // The daemon fetches & applies auto-update subscriptions itself; this stream
+  // tells the UI to reload the persisted state. Returns an unsubscribe.
+  onSubApplied(cb: (info: SubAppliedEvent) => void): () => void;
+
+  // Same, for the headless geo-asset refresh: it stamps each asset's `lastUpdated`
+  // (and may restart the core), so the UI reloads. Returns an unsubscribe.
+  onAssetsUpdated(cb: (info: AssetsUpdatedEvent) => void): () => void;
+
+  // asset files
+  downloadAsset(
+    filename: string,
+    url: string,
+    mode?: ResourceUpdateMode,
+  ): Promise<{ ok: boolean; error?: string }>;
+  listAssets(): Promise<string[]>;
+  listApps(): Promise<AppEntry[]>;
+  reloadAppFilter(): Promise<{ ok: boolean; error?: string }>;
+
+  // Which core each profile runs on (and its capability force), resolved by the
+  // backend's `core::resolve_core` — the UI renders the answer instead of
+  // re-implementing the resolution matrix. Batch: one call per profile list.
+  resolveCores(profiles: Profile[]): Promise<CoreResolution[]>;
+
+  // Ids of the stored profiles `profile` (possibly an unsaved draft) can dial
+  // through, checked by the backend's `chain::chain_candidates` — the same rule
+  // the config builders enforce, so the UI never re-implements chain validity.
+  chainCandidates(profile: Profile): Promise<string[]>;
+
+  // import / export / backup
+  parseShareLinks(text: string): Promise<Profile[]>; // vless:// vmess:// trojan://
+  buildShareLink(p: Profile): Promise<string>;
+  exportBackup(): Promise<Blob>;
+  importBackup(file: Blob, mode: "merge" | "replace"): Promise<void>;
+}
+
+/** Parse a raw service-status payload into a typed `ServiceStatus`. */
+export function parseServiceStatus(value: unknown): ServiceStatus {
+  if (!value || typeof value !== "object") throw new Error("Invalid service status payload");
+  const s = value as Record<string, unknown>;
+  const state = s.state;
+  if (
+    state !== "stopped" &&
+    state !== "connecting" &&
+    state !== "connected" &&
+    state !== "noInternet" &&
+    state !== "failed"
+  ) {
+    throw new Error("Invalid service state");
+  }
+  return {
+    state,
+    error: typeof s.error === "string" ? s.error : undefined,
+    activeId: typeof s.activeId === "string" ? s.activeId : null,
+    uploadBytes: typeof s.uploadBytes === "number" ? s.uploadBytes : 0,
+    downloadBytes: typeof s.downloadBytes === "number" ? s.downloadBytes : 0,
+    uptimeSec: typeof s.uptimeSec === "number" ? s.uptimeSec : 0,
+    core: typeof s.core === "string" ? s.core : "",
+    engine: s.engine === "xray" ? s.engine : null,
+    pendingRestart: s.pendingRestart === true,
+    latencyMs: typeof s.latencyMs === "number" ? s.latencyMs : null,
+  };
+}
+
+/** Parse a raw capabilities payload into a typed `Capabilities`. */
+export function parseCapabilities(value: unknown): Capabilities {
+  const s = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  return {
+    bridge: typeof s.bridge === "string" ? s.bridge : "",
+    xrayVersion: typeof s.xrayVersion === "string" ? s.xrayVersion : "",
+    tun: s.tun === true || s.tun === 1 || s.tun === "1",
+  };
+}

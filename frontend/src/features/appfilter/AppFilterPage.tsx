@@ -1,0 +1,194 @@
+// ============================================================
+// features/appfilter/AppFilterPage.tsx
+// Per-app proxy filter: each app can be set to default/bypass/force-proxy.
+// Rendered as a full-screen overlay (.fullpage) over the current screen.
+// ============================================================
+import { useEffect, useMemo, useState } from "react";
+import { AppBar, Card, ListRow, SectionLabel, Segmented } from "../../components";
+import { IconBtn } from "../../components/icons";
+import { type Translate, useT } from "../../i18n";
+import type { AppEntry } from "../../lib/bridge";
+import { bridge } from "../../lib/bridge-provider";
+import { fuzzyScore, NO_MATCH } from "../../lib/fuzzy";
+import { useAppStore } from "../../store/useAppStore";
+
+// Android: pkg:uid identifies one profile instance of an app. Desktop: the program
+// the launcher runs, matched by process name in the core's routing.
+const filterKey = (app: AppEntry) => (app.exe ? `exe:${app.exe}` : `${app.pkg}:${app.uid}`);
+// userId > 0 means work/secondary profile (Android only).
+const profileLabel = (app: AppEntry, t: Translate): string | null => {
+  if (app.exe) return null;
+  const userId = Math.floor(app.uid / 100000);
+  return userId > 0 ? t("appFilter.userProfile", { n: userId }) : null;
+};
+
+export default function AppFilterPage({ onBack }: { onBack: () => void }) {
+  const t = useT();
+  const settings = useAppStore((s) => s.settings);
+  const setSetting = useAppStore((s) => s.setSetting);
+  const setAppFilterMode = useAppStore((s) => s.setAppFilterMode);
+  // Desktop: a core behind an external tun helper only sees the helper's
+  // connections, so the filter can't apply there (the backend says which).
+  const unavailable = useAppStore((s) =>
+    s.activeId ? s.coreResolutions[s.activeId]?.seesProcesses === false : false,
+  );
+
+  const [apps, setApps] = useState<AppEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+
+  const captureMode = settings.appCaptureMode ?? "all";
+  const appFilter = settings.appFilter ?? {};
+
+  useEffect(() => {
+    bridge
+      .listApps()
+      .then((list) => {
+        const seen = new Set<string>();
+        setApps(
+          list.filter((a) => {
+            const k = filterKey(a);
+            return seen.has(k) ? false : seen.add(k);
+          }),
+        );
+      })
+      .catch(() => setApps([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim();
+    if (q) {
+      return apps
+        .map((app) => ({
+          app,
+          score: fuzzyScore(`${app.label ?? ""} ${app.pkg} ${app.exe ?? ""}`, q),
+        }))
+        .filter((entry) => entry.score > NO_MATCH)
+        .sort((a, b) => b.score - a.score || a.app.pkg.localeCompare(b.app.pkg))
+        .map((entry) => entry.app);
+    }
+    return [...apps].sort((a, b) => {
+      const ka = filterKey(a),
+        kb = filterKey(b);
+      const ma = appFilter[ka];
+      const mb = appFilter[kb];
+      if (ma && !mb) return -1;
+      if (!ma && mb) return 1;
+      if (a.system !== b.system) return a.system ? 1 : -1;
+      return a.pkg.localeCompare(b.pkg) || a.uid - b.uid;
+    });
+  }, [apps, query, appFilter]);
+
+  const activeCount = Object.keys(appFilter).length;
+
+  return (
+    <div className="fullpage screen-enter">
+      <AppBar
+        title={t("appFilter.title")}
+        subtitle={activeCount > 0 ? t("appFilter.subtitle", { n: activeCount }) : undefined}
+        left={<IconBtn name="arrow_back" title={t("editor.cancel")} onClick={onBack} />}
+      />
+
+      <div className="scroll">
+        <SectionLabel>{t("appFilter.captureMode")}</SectionLabel>
+        <Card style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+          <Segmented
+            ariaLabel={t("appFilter.captureMode")}
+            value={captureMode}
+            onChange={(v) => setSetting("appCaptureMode", v)}
+            options={[
+              { value: "all", label: t("appFilter.captureAll") },
+              { value: "none", label: t("appFilter.captureNone") },
+            ]}
+          />
+          <div className="hint">
+            {captureMode === "all" ? t("appFilter.captureAllHint") : t("appFilter.captureNoneHint")}
+          </div>
+        </Card>
+
+        {unavailable && (
+          <Card style={{ padding: 14, marginTop: 12 }}>
+            <div className="hint">{t("appFilter.unavailableTun")}</div>
+          </Card>
+        )}
+
+        <SectionLabel>{t("appFilter.openPage")}</SectionLabel>
+        <input
+          className="input"
+          placeholder={t("appFilter.search")}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          style={{ marginBottom: 10 }}
+        />
+
+        {loading ? (
+          <div style={{ padding: 24, textAlign: "center", color: "var(--on-surface-faint)" }}>
+            {t("app.loading")}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div style={{ padding: 24, textAlign: "center", color: "var(--on-surface-faint)" }}>
+            {t("appFilter.empty")}
+          </div>
+        ) : (
+          <Card
+            style={{
+              padding: "4px 14px",
+              ...(unavailable ? { opacity: 0.5, pointerEvents: "none" } : {}),
+            }}
+            aria-disabled={unavailable || undefined}
+          >
+            {filtered.map((app) => {
+              const key = filterKey(app);
+              const mode = appFilter[key] ?? null;
+              const pLabel = profileLabel(app, t);
+              return (
+                <ListRow
+                  key={key}
+                  icon={app.iconUrl ? undefined : app.system ? "shield_moon" : "smart_toy"}
+                  iconSlot={
+                    app.iconUrl ? (
+                      <img
+                        src={app.iconUrl}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0 }}
+                      />
+                    ) : undefined
+                  }
+                  title={app.label ?? app.pkg}
+                  sub={
+                    <>
+                      {[
+                        app.exe ??
+                          (app.label ? app.pkg : app.system ? t("appFilter.systemApp") : null),
+                        pLabel,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                      <div style={{ marginTop: 6 }}>
+                        <Segmented
+                          size="sm"
+                          ariaLabel={app.label ?? app.pkg}
+                          value={mode ?? "default"}
+                          onChange={(v) => setAppFilterMode(key, v === "default" ? null : v)}
+                          options={[
+                            { value: "default", label: t("appFilter.default") },
+                            { value: "bypass", label: t("appFilter.bypass") },
+                            { value: "force-proxy", label: t("appFilter.forceProxy") },
+                          ]}
+                        />
+                      </div>
+                    </>
+                  }
+                />
+              );
+            })}
+          </Card>
+        )}
+        <div style={{ height: 16 }} />
+      </div>
+    </div>
+  );
+}
