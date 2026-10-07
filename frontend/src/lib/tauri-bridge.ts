@@ -32,12 +32,6 @@ const push: PushStreams = {
   subscribeStatus(cb) {
     return listen(events.statusChanged, (payload) => cb(payload));
   },
-  subscribeSubApplied(cb) {
-    return listen(events.subscriptionApplied, (payload) => cb(payload));
-  },
-  subscribeAssetsUpdated(cb) {
-    return listen(events.assetsUpdated, (payload) => cb(payload));
-  },
 };
 
 export const tauriBridge: Bridge = createBridge(dispatch, push);

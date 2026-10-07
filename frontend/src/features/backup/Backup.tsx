@@ -22,7 +22,6 @@ const QrScannerSheet = lazy(() =>
 
 export default function Backup({ onClose }: { onClose: () => void }) {
   const groups = useAppStore((s) => s.groups);
-  const subscriptions = useAppStore((s) => s.subscriptions);
   const settings = useAppStore((s) => s.settings);
   const activeId = useAppStore((s) => s.activeId);
   const importBackup = useAppStore((s) => s.importBackup);
@@ -30,8 +29,8 @@ export default function Backup({ onClose }: { onClose: () => void }) {
   const t = useT();
 
   const backupJson = useMemo(
-    () => JSON.stringify({ groups, subscriptions, settings, activeId }, null, 2),
-    [groups, subscriptions, settings, activeId],
+    () => JSON.stringify({ groups, settings, activeId }, null, 2),
+    [groups, settings, activeId],
   );
   const [importText, setImportText] = useState("");
   const [qrOpen, setQrOpen] = useState(false);
@@ -46,8 +45,6 @@ export default function Backup({ onClose }: { onClose: () => void }) {
             ok: true as const,
             hint: t("backup.summary", {
               groups: data.groups?.length ?? 0,
-              profiles: data.profiles?.length ?? 0,
-              subscriptions: data.subscriptions?.length ?? 0,
             }),
           }
         : { ok: false as const, hint: t("backup.invalidStructure") };
@@ -67,7 +64,6 @@ export default function Backup({ onClose }: { onClose: () => void }) {
         mono
         hint={t("backup.summary", {
           groups: groups.length,
-          subscriptions: subscriptions.length,
         })}
       />
       <div style={{ display: "flex", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>

@@ -30,13 +30,6 @@ export function DnsSection({
           onChange={(value) => set("fakeDns", value)}
         />
         <RowToggle
-          icon="public"
-          title={t("settings.ipv6")}
-          sub={t("settings.ipv6Sub")}
-          on={!!settings.ipv6Enabled}
-          onChange={(value) => set("ipv6Enabled", value)}
-        />
-        <RowToggle
           icon="swap_vert"
           title={t("settings.preferIpv6")}
           sub={t("settings.preferIpv6Sub")}

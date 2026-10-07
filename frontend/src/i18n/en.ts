@@ -2,7 +2,7 @@
 // i18n/en.ts
 // Full English dictionary — source of truth for all UI strings.
 // ============================================================
-import { plural, pluralPart, selectPart } from "./messages";
+import { plural, pluralPart } from "./messages";
 import type { MessageRuntime, MessageValue, Vars } from "./runtime";
 
 // Keys here are the single source of truth — `DictKey` is derived from them
@@ -13,7 +13,6 @@ const en = {
   // nav
   "nav.overview": "Overview",
   "nav.profiles": "Profiles",
-  "nav.subs": "Subs",
   "nav.settings": "Settings",
   // overview
   "overview.title": "Kasumi Proxy",
@@ -26,7 +25,6 @@ const en = {
   "overview.noInternet": "No internet",
   "overview.failed": "Failed",
   "overview.noActiveProfile": "No active profile selected",
-  "overview.needsAssets": "Download geo resource files before using this routing mode.",
   "overview.download": "Download",
   "overview.upload": "Upload",
   "overview.uptime": "Uptime",
@@ -43,10 +41,8 @@ const en = {
   "tray.recent": "Recent profiles",
   "overview.profilesCounter": "Profiles",
   "overview.groupsCounter": "Groups",
-  "overview.subsCounter": "Subs",
   "overview.quickActions": "Quick actions",
   "overview.openProfiles": "Open profiles",
-  "overview.updateAllSubs": "Update all subs",
   "overview.pingAll": "Ping all",
   "overview.backupRestore": "Backup & restore",
   "overview.recentActivity": "Recent activity",
@@ -58,7 +54,6 @@ const en = {
     one: "Imported # profile",
     other: "Imported # profiles",
   }),
-  "activity.subUpdated": "Subscription updated · {name}",
   "activity.pingComplete": plural("count", {
     one: "Ping complete · # profile",
     other: "Ping complete · # profiles",
@@ -77,8 +72,6 @@ const en = {
     one: "Removed # duplicate",
     other: "Removed # duplicates",
   }),
-  "activity.assetDownloaded": "Asset updated · {name}",
-  "activity.assetRestart": "Connection restarted to apply new geo data",
   "activity.profileSaved": "Profile saved · {remarks}",
   "time.now": "now",
   "time.ago": "{n}{unit} ago",
@@ -273,77 +266,6 @@ const en = {
   "editor.acceptProxyProtocol": "Accept PROXY protocol",
   "editor.vmessGlobalPadding": "Global padding",
   "editor.vmessAuthenticatedLength": "Authenticated length",
-  // subscriptions
-  "subs.title": "Subscriptions",
-  "subs.subtitle": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { active = 0, imported = 0 } = vars ?? {};
-    return `${pluralPart(Number(active), { one: "# active subscription", other: "# active subscriptions" }, runtime)} · ${pluralPart(Number(imported), { one: "# imported profile", other: "# imported profiles" }, runtime)}`;
-  },
-  "subs.updateAll": "Update all",
-  "subs.add": "Add",
-  "subs.add.manual": "Add manually",
-  "subs.add.manualSub": "One subscription with options",
-  "subs.add.paste": "Paste a list",
-  "subs.add.pasteSub": "Multiple URLs or exported JSON",
-  "subs.export": "Export",
-  "subs.copyUrl": "Copy URL",
-  "subs.urlCopied": "URL copied",
-  "subs.exportHint":
-    "Copy your subscriptions to the clipboard to back them up or move them to another device.",
-  "subs.exportUrls": "Copy URLs",
-  "subs.exportJson": "Copy as JSON",
-  "subs.exportEmpty": "No subscriptions to export",
-  "subs.import": "Import",
-  "subs.importLabel": "Subscription URLs or JSON",
-  "subs.importHint":
-    "Paste subscription URLs (one per line) or a JSON dump exported from another device.",
-  "subs.importBtn": "Import",
-  "subs.importEmpty": "Nothing to import",
-  "subs.importInvalid": "Could not parse the input",
-  "subs.imported": plural("count", {
-    one: "Imported # subscription",
-    other: "Imported # subscriptions",
-  }),
-  "subs.exportCopied": plural("count", {
-    one: "Copied # subscription",
-    other: "Copied # subscriptions",
-  }),
-  "subs.addBtn": "Add subscription",
-  "subs.infoText":
-    "Each subscription imports its servers into a selected group. Updating refreshes those profiles while keeping your active selection where possible.",
-  "subs.autoLabel": "Auto · {interval}",
-  "subs.manualLabel": "Manual",
-  "subs.insecureLabel": "Insecure",
-  "subs.errorLabel": "Error",
-  "subs.updateBtn": "Update",
-  "subs.neverUpdated": "never",
-  "subs.updatedAt": "updated {date}",
-  "subs.profilesCount": plural("n", { one: "# profile", other: "# profiles" }),
-  "subs.confirmDel.title": "Delete subscription?",
-  "subs.confirmDel.body": "Imported profiles from this source will also be removed.",
-  "subs.confirmDel.cancel": "Cancel",
-  "subs.confirmDel.delete": "Delete",
-  "subs.edit.newTitle": "Add subscription",
-  "subs.edit.editTitle": "Edit subscription",
-  "subs.edit.save": "Save",
-  "subs.edit.remarks": "Remarks",
-  "subs.edit.remarksPh": "My provider",
-  "subs.edit.url": "Subscription URL",
-  "subs.edit.urlPh": "https://…",
-  "subs.edit.targetGroup": "Target group",
-  "subs.edit.userAgent": "User-Agent",
-  "subs.edit.userAgentPh": "default",
-  "subs.edit.filter": "Filter (regex)",
-  "subs.edit.filterPh": "(?i)premium",
-  "subs.autoUpdate": "Auto-update",
-  "subs.autoUpdateSub": "Refresh on a schedule",
-  "subs.interval": "Interval (hh:mm)",
-  "subs.edit.urlInsecureHint":
-    "Unencrypted HTTP — this subscription could be tampered with in transit.",
-  "subs.edit.validationRemarks": "Remarks required",
-  "subs.edit.validationUrl": "Subscription URL required",
-  "subs.edit.validationInterval": "Interval must be greater than 0",
-  "subs.edit.validationFilter": "Invalid regex",
   // settings
   "settings.title": "Settings",
   "settings.subtitle": "Routing & core",
@@ -352,7 +274,6 @@ const en = {
   "settings.xrayVersion": "Xray version",
   "settings.tun": "TUN",
   "settings.profiles": "Profiles",
-  "settings.subscriptions": "Subscriptions",
   "settings.activeProfile": "Active profile",
   "settings.activeSelected": "selected",
   "settings.activeNone": "none",
@@ -441,8 +362,6 @@ const en = {
   "settings.dnsHosts": "Static hosts",
   "settings.dnsHostsPh": "example.com=1.2.3.4\\ndomain.net=5.6.7.8",
   "settings.dnsHostsHint": "One host=ip per line, or raw JSON object",
-  "settings.ipv6": "Enable IPv6",
-  "settings.ipv6Sub": "Resolve and route IPv6 addresses",
   "settings.socksAuth": "SOCKS authentication",
   "settings.socksUser": "Username",
   "settings.socksPass": "Password",
@@ -503,11 +422,11 @@ const en = {
   "backup.merge": "Merge",
   "backup.replace": "Replace",
   "backup.summary": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { groups = 0, subscriptions = 0 } = vars ?? {};
-    return `${pluralPart(Number(groups), { one: "# group", other: "# groups" }, runtime)} · ${pluralPart(Number(subscriptions), { one: "# subscription", other: "# subscriptions" }, runtime)}`;
+    const { groups = 0 } = vars ?? {};
+    return `${pluralPart(Number(groups), { one: "# group", other: "# groups" }, runtime)}`;
   },
   "backup.mergeHint":
-    "Merge appends imported profiles/groups/subscriptions and overlays settings. Replace overwrites the current canonical state completely.",
+    "Merge appends imported profiles/groups and overlays settings. Replace overwrites the current canonical state completely.",
   "backup.invalidJson": "Invalid JSON",
   "backup.invalidStructure": "Invalid backup structure",
   "backup.copied": "Backup copied",
@@ -522,7 +441,6 @@ const en = {
   "common.mode.auto": "Auto (proxy, then direct)",
   "common.mode.proxy": "Proxy only",
   "common.mode.direct": "Direct only",
-  "common.proxyNotRunning": "Start the proxy before using Proxy only mode.",
   "common.openFile": "Open file…",
   // qr
   "qr.scan.title": "Scan QR code",
@@ -583,14 +501,6 @@ const en = {
   "profiles.row.select": "Select",
   "profiles.row.edit": "Edit",
   "profiles.row.more": "More",
-  // subscriptions extra
-  "subs.added": "Subscription added",
-  "subs.saved": "Subscription saved",
-  "subs.deleted": "Subscription deleted",
-  "subs.confirmDel.prefix": "Remove",
-  "subs.toggleUrl": "Toggle URL",
-  "subs.editAction": "Edit",
-  "subs.deleteAction": "Delete",
   // routing rule sheet
   "routingSheet.newTitle": "New routing rule",
   "routingSheet.editTitle": "Edit routing rule",
@@ -626,14 +536,6 @@ const en = {
   "routingSheet.sourceIpsHint": "Addresses or CIDRs of devices using the shared proxy port.",
   "routingSheet.delete": "Delete",
   // asset file sheet
-  "assetSheet.addTitle": "Add resource file",
-  "assetSheet.editTitle": "Edit resource file",
-  "assetSheet.save": "Save",
-  "assetSheet.filename": "Filename",
-  "assetSheet.filenamePh": "geoip.dat",
-  "assetSheet.url": "URL",
-  "assetSheet.urlPh": "https://github.com/.../download/geoip.dat",
-  "assetSheet.delete": "Delete",
   // settings extra
   "settings.routingRulesEditor": "Rules editor",
   "settings.routingRulesHint":
@@ -653,13 +555,11 @@ const en = {
   "settings.page.routing": "Routing",
   "settings.page.network": "DNS & connection",
   "settings.page.networkSub": "DNS, mux, fragment, local ports",
-  "settings.page.resources": "Resource files",
   "settings.page.app": "App",
   "settings.page.appSub": "autostart, logs, backup",
   "settings.page.about": "About",
   "settings.page.aboutSub": "Version, updates, diagnostics",
   "settings.rulesCount": plural("count", { one: "# rule", other: "# rules" }),
-  "settings.assetCount": plural("count", { one: "# file", other: "# files" }),
   "settings.routingCatchAll":
     "Matches every connection — the rules below and the automatic IP check never run.",
   "settings.routingCatchAllRedundant":
@@ -679,22 +579,6 @@ const en = {
   "settings.routingRuleNoMatch": "No match fields",
   "settings.routingReorder": "Reorder rule",
   "settings.routingRulesTitle": "Rules",
-  "settings.assetFiles": "Resource files",
-  "settings.assetHint": "These are Xray geo databases.",
-  "settings.assetUpdateAll": "Update all",
-  "settings.assetAdd": "Add file",
-  "settings.assetAutoUpdate": "Auto-update",
-  "settings.assetAutoUpdateSub": "Refresh geosite/geoip on a schedule",
-  "settings.assetUpdateInterval": "Update interval",
-  "settings.assetAutoUpdateWarning":
-    "When the geo data changes, the active connection restarts briefly to apply it.",
-  "settings.assetIntervalHours": plural("count", { one: "Every # hour", other: "Every # hours" }),
-  "settings.assetIntervalDays": plural("count", { one: "Every # day", other: "Every # days" }),
-  "settings.assetDownload": "Download",
-  "settings.assetDelete": "Delete",
-  "settings.assetLinks": "Ready links for geoip.dat / geosite.dat",
-  "settings.assetUse": "Use",
-  "settings.assetNotDownloaded": "Not downloaded yet",
   "settings.protocol.vless": "VLESS",
   "settings.protocol.vmess": "VMess",
   "settings.protocol.trojan": "Trojan",
@@ -779,8 +663,6 @@ const en = {
   "store.service.restarted": "Restarted",
   "store.service.stoppedProfileRemoved": "Service stopped because the active profile was removed",
   "store.service.stoppedProfileDeleted": "Service stopped because the active profile was deleted",
-  "store.service.stoppedSubRemoved":
-    "Service stopped because the active profile's subscription was removed",
   "store.service.stoppedBeforeBackupRestore": "Service stopped before backup restore",
   "store.profile.copySuffix": "copy",
   "store.profile.imported": plural("count", {
@@ -802,24 +684,6 @@ const en = {
     other: "Removed # duplicates",
   }),
   "store.dedup.none": "No duplicates found",
-  "store.sub.updateFailed": "Update failed: {name}",
-  "store.sub.updating": "Updating {name}…",
-  "store.sub.updatedProfiles": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { count = 0, name = "" } = vars ?? {};
-    return `${name}: ${pluralPart(Number(count), { one: "# profile", other: "# profiles" }, runtime)}`;
-  },
-  "store.asset.downloadFailed": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `Download failed (${selectPart(String(mode), { auto: "automatic", proxy: "proxy", direct: "direct", other: "{value}" }, runtime)}): ${name}`;
-  },
-  "store.asset.downloadFailedReason": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "", reason = "" } = vars ?? {};
-    return `Download failed (${selectPart(String(mode), { auto: "automatic", proxy: "proxy", direct: "direct", other: "{value}" }, runtime)}): ${name} · ${reason}`;
-  },
-  "store.asset.updated": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `Updated ${name} via ${selectPart(String(mode), { auto: "automatic", proxy: "proxy", direct: "direct", other: "{value}" }, runtime)}`;
-  },
   "store.backup.invalidJson": "Invalid backup JSON",
   "store.backup.invalidStructure": "Invalid backup structure",
   "store.backup.restored": "Backup restored",

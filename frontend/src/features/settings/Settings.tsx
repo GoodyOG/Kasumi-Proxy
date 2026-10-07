@@ -5,18 +5,15 @@
 
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { AppBar, Card, IconBtn, NavRow } from "../../components";
-import type { AssetFile, RoutingRule } from "../../generated/bindings";
+import type { RoutingRule } from "../../generated/bindings";
 import { LOCALES, useLang, useT } from "../../i18n";
-import { isServiceUp } from "../../lib/bridge";
 import { getRuntimeBridgeMode } from "../../lib/ksu-webui";
 import { useEscapeToClose } from "../../lib/useEscapeToClose";
 import { useIsWide } from "../../lib/useIsWide";
-import { uid } from "../../lib/utils";
 import { useAppStore } from "../../store/useAppStore";
 import { pageFromHash, SETTINGS_PAGES, type SettingsPage } from "./pages";
 import { AboutSection } from "./sections/AboutSection";
 import { AdvancedSection } from "./sections/AdvancedSection";
-import { AssetFilesSection } from "./sections/AssetFilesSection";
 import { ConnectionSection } from "./sections/ConnectionSection";
 import { DiagnosticsSection } from "./sections/DiagnosticsSection";
 import { DnsSection } from "./sections/DnsSection";
@@ -25,9 +22,6 @@ import { RoutingSection } from "./sections/RoutingSection";
 import { SystemSection } from "./sections/SystemSection";
 import { TunEngineSection } from "./sections/TunEngineSection";
 
-const AssetFileSheet = lazy(() =>
-  import("./AssetFileSheet").then((module) => ({ default: module.AssetFileSheet })),
-);
 const RoutingRuleSheet = lazy(() =>
   import("./RoutingRuleSheet").then((module) => ({ default: module.RoutingRuleSheet })),
 );
@@ -46,22 +40,14 @@ export default function Settings({
 }) {
   const settings = useAppStore((s) => s.settings);
   const profiles = useAppStore((s) => s.profiles);
-  const subscriptions = useAppStore((s) => s.subscriptions);
   const routingRules = useAppStore((s) => s.routingRules);
-  const assetFiles = useAppStore((s) => s.assetFiles);
   const activeId = useAppStore((s) => s.activeId);
-  const service = useAppStore((s) => s.service);
   const caps = useAppStore((s) => s.caps);
-  const notify = useAppStore((s) => s.notify);
   const setSetting = useAppStore((s) => s.setSetting);
   const addRoutingRule = useAppStore((s) => s.addRoutingRule);
   const updateRoutingRule = useAppStore((s) => s.updateRoutingRule);
   const removeRoutingRule = useAppStore((s) => s.removeRoutingRule);
   const reorderRoutingRules = useAppStore((s) => s.reorderRoutingRules);
-  const addAssetFile = useAppStore((s) => s.addAssetFile);
-  const updateAssetFile = useAppStore((s) => s.updateAssetFile);
-  const removeAssetFile = useAppStore((s) => s.removeAssetFile);
-  const downloadAsset = useAppStore((s) => s.downloadAsset);
   const t = useT();
   const { lang } = useLang();
   const isWide = useIsWide();
@@ -90,16 +76,11 @@ export default function Settings({
 
   const [editingRule, setEditingRule] = useState<RoutingRule | null>(null);
   const [ruleSheetOpen, setRuleSheetOpen] = useState(false);
-  const [editingAsset, setEditingAsset] = useState<AssetFile | null>(null);
-  const [assetSheetOpen, setAssetSheetOpen] = useState(false);
-  const [busyAssets, setBusyAssets] = useState<string[]>([]);
   const [rulesIOOpen, setRulesIOOpen] = useState(false);
 
   const set = <K extends keyof typeof settings>(key: K, value: (typeof settings)[K]) =>
     setSetting(key, value);
   const bridgeMode = getRuntimeBridgeMode();
-
-  const busyAssetSet = useMemo(() => new Set(busyAssets), [busyAssets]);
 
   const openNewRule = () => {
     setEditingRule(null);
@@ -117,74 +98,6 @@ export default function Settings({
     else addRoutingRule(rule);
   };
 
-  const openNewAsset = () => {
-    setEditingAsset(null);
-    setAssetSheetOpen(true);
-  };
-
-  const openAssetEditor = (asset: AssetFile) => {
-    setEditingAsset(asset);
-    setAssetSheetOpen(true);
-  };
-
-  const saveAsset = (asset: AssetFile) => {
-    const byId = assetFiles.find((item) => item.id === asset.id);
-    if (byId) {
-      updateAssetFile(asset.id, asset);
-      return;
-    }
-    const byName = assetFiles.find((item) => item.remarks === asset.remarks);
-    if (byName) {
-      updateAssetFile(byName.id, {
-        remarks: asset.remarks,
-        url: asset.url,
-        locked: byName.locked,
-      });
-      return;
-    }
-    addAssetFile(asset);
-  };
-
-  const ensureProxyForAssetDownload = () => {
-    if (settings.assetUpdateMode === "proxy" && !isServiceUp(service.state)) {
-      notify(t("common.proxyNotRunning"));
-      return false;
-    }
-    return true;
-  };
-
-  const runAssetDownload = async (id: string) => {
-    if (!ensureProxyForAssetDownload()) return;
-    setBusyAssets((current) => [...current, id]);
-    try {
-      await downloadAsset(id, settings.assetUpdateMode);
-    } finally {
-      setBusyAssets((current) => current.filter((item) => item !== id));
-    }
-  };
-
-  const updateAllAssets = async () => {
-    if (!ensureProxyForAssetDownload()) return;
-    for (const asset of assetFiles) {
-      await runAssetDownload(asset.id);
-    }
-  };
-
-  const addResourceLink = (remarks: string, url: string) => {
-    const existing = assetFiles.find((item) => item.remarks === remarks);
-    if (existing) {
-      updateAssetFile(existing.id, { url, lastUpdated: null });
-      return;
-    }
-    addAssetFile({
-      id: uid(),
-      remarks,
-      url,
-      lastUpdated: null,
-      locked: false,
-    });
-  };
-
   const setRoutingMode = (mode: typeof settings.routingMode) => set("routingMode", mode);
 
   const summary: Record<SettingsPage, string> = {
@@ -196,7 +109,6 @@ export default function Settings({
           : t("settings.routingGlobal"),
     tun: t("settings.tunEngine"),
     network: t("settings.page.networkSub"),
-    resources: t("settings.assetCount", { count: assetFiles.length }),
     app: `${LOCALES[lang].label} · ${t("settings.page.appSub")}`,
     about: t("settings.page.aboutSub"),
   };
@@ -245,21 +157,6 @@ export default function Settings({
             <LocalPortsSection settings={settings} set={set} />
           </>
         );
-      case "resources":
-        return (
-          <AssetFilesSection
-            assetFiles={assetFiles}
-            busyAssetSet={busyAssetSet}
-            runAssetDownload={runAssetDownload}
-            updateAllAssets={updateAllAssets}
-            openNewAsset={openNewAsset}
-            onEditAsset={openAssetEditor}
-            settings={settings}
-            set={set}
-            addResourceLink={addResourceLink}
-            removeAssetFile={removeAssetFile}
-          />
-        );
       case "app":
         return (
           <>
@@ -281,7 +178,6 @@ export default function Settings({
               xrayVersion={caps?.xrayVersion ?? ""}
               tun={caps?.tun ?? false}
               profilesCount={profiles.length}
-              subscriptionsCount={subscriptions.length}
               activeId={activeId}
             />
           </>
@@ -346,17 +242,6 @@ export default function Settings({
       {rulesIOOpen && (
         <Suspense fallback={null}>
           <RoutingRulesIOSheet open={rulesIOOpen} onClose={() => setRulesIOOpen(false)} />
-        </Suspense>
-      )}
-      {assetSheetOpen && (
-        <Suspense fallback={null}>
-          <AssetFileSheet
-            open={assetSheetOpen}
-            asset={editingAsset}
-            onClose={() => setAssetSheetOpen(false)}
-            onSave={saveAsset}
-            onDelete={removeAssetFile}
-          />
         </Suspense>
       )}
     </div>

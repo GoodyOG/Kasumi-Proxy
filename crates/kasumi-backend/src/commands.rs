@@ -10,13 +10,12 @@
 //! own slices; nothing here proxies them over a socket.
 
 use std::fmt;
-use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
 use kasumi_core::chain::chain_candidates;
 use kasumi_core::contract::{
-    Capabilities, CoreResolution, FetchMode, LogTarget, ServiceState, TestKind, WsInfo,
+    Capabilities, CoreResolution, LogTarget, ServiceState, TestKind, WsInfo,
 };
 use kasumi_core::core::{forced_core, resolve_core};
 use kasumi_core::core_config::{CoreConfig, build_core_config};
@@ -27,7 +26,7 @@ use kasumi_core::state::{AppState, DEFAULT_LOG_ROTATE_KB, default_app_state};
 
 use crate::fs::{read_text, write_text};
 use crate::fsjson::read_json;
-use crate::net::{FetchUrlOptions, fetch_url, used_ports};
+use crate::net::used_ports;
 use crate::platform::{AppInfo, Platform};
 
 /// First port `freePorts` probes when the caller doesn't pin a start.
@@ -64,22 +63,6 @@ pub enum Command {
     Mutate {
         intent: Box<MutationIntent>,
     },
-    #[serde(rename_all = "camelCase")]
-    FetchSubscription {
-        url: String,
-        #[serde(default)]
-        mode: FetchMode,
-        #[serde(default)]
-        user_agent: Option<String>,
-        #[serde(default)]
-        allow_insecure: bool,
-    },
-    DownloadAsset {
-        filename: String,
-        url: String,
-        #[serde(default)]
-        mode: FetchMode,
-    },
     FreePorts {
         #[serde(default)]
         start: Option<u16>,
@@ -88,7 +71,6 @@ pub enum Command {
         #[serde(default)]
         span: Option<u16>,
     },
-    ListAssets,
     Capabilities,
     ListApps,
     Log {
@@ -166,14 +148,6 @@ pub enum Command {
         profile_id: Option<String>,
     },
     ReloadAppFilter,
-    // Fetch one subscription and apply it server-side (the same path the headless
-    // updater uses), persisting and restarting the active data-path when affected.
-    // Needs the Service's serializer + lifecycle, so the stateless `dispatch` rejects
-    // it and `Service::dispatch` runs it. Returns the new merged `AppState`.
-    #[serde(rename_all = "camelCase")]
-    ApplySubscription {
-        sub_id: String,
-    },
 }
 
 /// One reply. The tag `kind` selects the payload shape under `value`.
@@ -184,7 +158,6 @@ pub enum Response {
     Profiles(Vec<Profile>),
     Text(String),
     Ports(Vec<u16>),
-    Assets(Vec<String>),
     Capabilities(Capabilities),
     Apps(Vec<AppInfo>),
     Status(ServiceState),
@@ -199,30 +172,6 @@ pub enum Response {
     Speed(Option<i64>),
     /// A bare acknowledgement (`{ok: true}` / no body in the old protocol).
     Ok,
-}
-
-/// Reject path traversal / quoting tricks in asset filenames.
-pub(crate) fn safe_filename(name: &str) -> bool {
-    !name.is_empty()
-        && !name.contains('/')
-        && !name.contains("..")
-        && !name.contains('"')
-        && !name.contains('\\')
-}
-
-/// Names of files in `dir` ending in `suffix`, alphabetically. Missing dir → empty.
-async fn list_dir(dir: &Path, suffix: &str) -> Vec<String> {
-    let mut out = Vec::new();
-    if let Ok(mut rd) = tokio::fs::read_dir(dir).await {
-        while let Ok(Some(entry)) = rd.next_entry().await {
-            let name = entry.file_name().to_string_lossy().into_owned();
-            if name.ends_with(suffix) {
-                out.push(name);
-            }
-        }
-    }
-    out.sort();
-    out
 }
 
 /// Resolve a profile by id and build its launch config, then let the platform apply
@@ -270,45 +219,6 @@ pub async fn dispatch(platform: &dyn Platform, cmd: Command) -> Result<Response,
                 .unwrap_or_else(default_app_state);
             Ok(Response::State(Box::new(state)))
         }
-        Command::FetchSubscription {
-            url,
-            mode,
-            user_agent,
-            allow_insecure,
-        } => {
-            let url = url.trim();
-            if url.is_empty() {
-                return Err(err("empty subscription URL"));
-            }
-            let proxy = platform
-                .proxy_status()
-                .await
-                .map_err(|e| err(e.to_string()))?;
-            let body = fetch_url(
-                url,
-                FetchUrlOptions {
-                    mode,
-                    proxy: Some(proxy),
-                    user_agent,
-                    allow_insecure,
-                    timeout: None,
-                },
-            )
-            .await
-            .map_err(|e| err(e.to_string()))?;
-            Ok(Response::Text(String::from_utf8_lossy(&body).into_owned()))
-        }
-
-        Command::DownloadAsset {
-            filename,
-            url,
-            mode,
-        } => {
-            crate::asset_update::download_asset(platform, &filename, &url, mode)
-                .await
-                .map_err(err)?;
-            Ok(Response::Ok)
-        }
 
         Command::FreePorts { start, count, span } => {
             let start = start.unwrap_or(FREE_PORTS_BASE) as u32;
@@ -327,8 +237,6 @@ pub async fn dispatch(platform: &dyn Platform, cmd: Command) -> Result<Response,
             }
             Ok(Response::Ports(ports))
         }
-
-        Command::ListAssets => Ok(Response::Assets(list_dir(&paths.dat_dir, ".dat").await)),
 
         Command::Capabilities => {
             let c = platform
@@ -470,7 +378,6 @@ pub async fn dispatch(platform: &dyn Platform, cmd: Command) -> Result<Response,
         | Command::Stop
         | Command::Restart { .. }
         | Command::ReloadAppFilter
-        | Command::ApplySubscription { .. }
         | Command::ProbeConnection => Err(err(
             "stateful commands must be dispatched through the Service",
         )),
@@ -613,17 +520,6 @@ mod tests {
         assert!(ports[0] < ports[1]);
     }
 
-    #[tokio::test]
-    async fn list_assets_sorted() {
-        let (p, _d) = TestPlatform::new();
-        std::fs::write(p.paths().dat_dir.join("geosite.dat"), b"x").unwrap();
-        std::fs::write(p.paths().dat_dir.join("geoip.dat"), b"y").unwrap();
-        std::fs::write(p.paths().dat_dir.join("notes.txt"), b"z").unwrap();
-        let Response::Assets(a) = dispatch(&p, Command::ListAssets).await.unwrap() else {
-            panic!()
-        };
-        assert_eq!(a, vec!["geoip.dat", "geosite.dat"]);
-    }
 
     #[tokio::test]
     async fn capabilities_shaped_from_platform() {
@@ -880,39 +776,16 @@ mod tests {
         assert_eq!(rs[0].forced, None);
     }
 
-    #[tokio::test]
-    async fn download_asset_rejects_unsafe_filename() {
-        let (p, _d) = TestPlatform::new();
-        let e = dispatch(
-            &p,
-            Command::DownloadAsset {
-                filename: "../escape".into(),
-                url: "http://example".into(),
-                mode: FetchMode::Direct,
-            },
-        )
-        .await
-        .unwrap_err();
-        assert_eq!(e.0, "invalid filename");
-    }
 
     #[test]
     fn command_and_response_wire_shapes() {
         // Command is internally tagged on `cmd`; fields are camelCase.
         let c: Command = serde_json::from_value(serde_json::json!({
-            "cmd": "fetchSubscription",
-            "url": "https://x",
-            "allowInsecure": true
+            "cmd": "freePorts",
+            "start": 10000
         }))
         .unwrap();
-        assert!(matches!(
-            c,
-            Command::FetchSubscription {
-                allow_insecure: true,
-                mode: FetchMode::Auto,
-                ..
-            }
-        ));
+        assert!(matches!(c, Command::FreePorts { .. }));
         // Response is adjacently tagged kind/value.
         let v = serde_json::to_value(Response::Ports(vec![1, 2])).unwrap();
         assert_eq!(v, serde_json::json!({ "kind": "ports", "value": [1, 2] }));

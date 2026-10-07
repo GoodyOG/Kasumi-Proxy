@@ -2,7 +2,7 @@
 // i18n/zh.ts
 // Full Simplified Chinese dictionary.
 // ============================================================
-import { plural, pluralPart, selectPart } from "./messages";
+import { plural, pluralPart } from "./messages";
 import type { MessageRuntime, MessageValue, Vars } from "./runtime";
 
 const zh = {
@@ -11,7 +11,6 @@ const zh = {
   // nav
   "nav.overview": "概览",
   "nav.profiles": "配置",
-  "nav.subs": "订阅",
   "nav.settings": "设置",
   // overview
   "overview.title": "Kasumi Proxy",
@@ -24,7 +23,6 @@ const zh = {
   "overview.noInternet": "无网络连接",
   "overview.failed": "启动失败",
   "overview.noActiveProfile": "未选择活动配置",
-  "overview.needsAssets": "使用此路由模式前请先下载地理资源文件。",
   "overview.download": "下载",
   "overview.upload": "上传",
   "overview.uptime": "运行时长",
@@ -41,10 +39,8 @@ const zh = {
   "tray.recent": "最近的配置",
   "overview.profilesCounter": "配置",
   "overview.groupsCounter": "分组",
-  "overview.subsCounter": "订阅",
   "overview.quickActions": "快捷操作",
   "overview.openProfiles": "打开配置",
-  "overview.updateAllSubs": "更新全部订阅",
   "overview.pingAll": "全部测速",
   "overview.backupRestore": "备份与恢复",
   "overview.recentActivity": "最近活动",
@@ -53,7 +49,6 @@ const zh = {
   "activity.serviceRestarted": "服务已重启 · {remarks}",
   "activity.profileSwitched": "已切换至 {remarks}",
   "activity.profileImported": plural("count", { one: "已导入 # 个配置", other: "已导入 # 个配置" }),
-  "activity.subUpdated": "订阅已更新 · {name}",
   "activity.pingComplete": plural("count", {
     one: "测速完成 · # 个配置",
     other: "测速完成 · # 个配置",
@@ -72,8 +67,6 @@ const zh = {
     one: "已删除 # 个重复",
     other: "已删除 # 个重复",
   }),
-  "activity.assetDownloaded": "资源已更新 · {name}",
-  "activity.assetRestart": "已重启连接以应用新的地理数据",
   "activity.profileSaved": "配置已保存 · {remarks}",
   "time.now": "刚刚",
   "time.ago": "{n}{unit}前",
@@ -261,77 +254,6 @@ const zh = {
   "editor.acceptProxyProtocol": "接受 PROXY 协议",
   "editor.vmessGlobalPadding": "全局填充",
   "editor.vmessAuthenticatedLength": "认证长度",
-  // subscriptions
-  "subs.title": "订阅",
-  "subs.subtitle": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { active = 0, imported = 0 } = vars ?? {};
-    return `${pluralPart(Number(active), { one: "# 个已启用订阅", other: "# 个已启用订阅" }, runtime)} · ${pluralPart(Number(imported), { one: "# 个已导入配置", other: "# 个已导入配置" }, runtime)}`;
-  },
-  "subs.updateAll": "全部更新",
-  "subs.add": "添加",
-  "subs.add.manual": "手动添加",
-  "subs.add.manualSub": "带选项的单个订阅",
-  "subs.add.paste": "粘贴列表",
-  "subs.add.pasteSub": "多个 URL 或导出的 JSON",
-  "subs.export": "导出",
-  "subs.copyUrl": "复制 URL",
-  "subs.urlCopied": "已复制 URL",
-  "subs.exportHint": "将订阅复制到剪贴板以进行备份或迁移到其他设备。",
-  "subs.exportUrls": "复制 URL",
-  "subs.exportJson": "复制为 JSON",
-  "subs.exportEmpty": "没有可导出的订阅",
-  "subs.import": "导入",
-  "subs.importLabel": "订阅 URL 或 JSON",
-  "subs.importHint": "粘贴订阅 URL（每行一个）或从其他设备导出的 JSON。",
-  "subs.importBtn": "导入",
-  "subs.importEmpty": "没有可导入的内容",
-  "subs.importInvalid": "无法解析输入内容",
-  "subs.imported": plural("count", {
-    one: "已导入 # 个订阅",
-    other: "已导入 # 个订阅",
-  }),
-  "subs.exportCopied": plural("count", {
-    one: "已复制 # 个订阅",
-    other: "已复制 # 个订阅",
-  }),
-  "subs.addBtn": "添加订阅",
-  "subs.infoText":
-    "每个订阅会将其节点导入到所选分组。更新时会刷新这些配置，并尽可能保留当前活动配置。",
-  "subs.autoLabel": "自动 · {interval}",
-  "subs.manualLabel": "手动",
-  "subs.insecureLabel": "不安全",
-  "subs.errorLabel": "错误",
-  "subs.updateBtn": "更新",
-  "subs.neverUpdated": "从未",
-  "subs.updatedAt": "更新于 {date}",
-  "subs.profilesCount": plural("n", {
-    one: "# 个配置",
-    other: "# 个配置",
-  }),
-  "subs.confirmDel.title": "删除此订阅？",
-  "subs.confirmDel.body": "从该来源导入的配置也会一并删除。",
-  "subs.confirmDel.cancel": "取消",
-  "subs.confirmDel.delete": "删除",
-  "subs.edit.newTitle": "添加订阅",
-  "subs.edit.editTitle": "编辑订阅",
-  "subs.edit.save": "保存",
-  "subs.edit.remarks": "备注",
-  "subs.edit.remarksPh": "我的提供商",
-  "subs.edit.url": "订阅 URL",
-  "subs.edit.urlPh": "https://…",
-  "subs.edit.targetGroup": "目标分组",
-  "subs.edit.userAgent": "User-Agent",
-  "subs.edit.userAgentPh": "默认",
-  "subs.edit.filter": "过滤器（正则）",
-  "subs.edit.filterPh": "(?i)premium",
-  "subs.autoUpdate": "自动更新",
-  "subs.autoUpdateSub": "按计划自动刷新",
-  "subs.interval": "间隔（hh:mm）",
-  "subs.edit.urlInsecureHint": "未加密的 HTTP —— 此订阅在传输中可能被篡改。",
-  "subs.edit.validationRemarks": "备注不能为空",
-  "subs.edit.validationUrl": "订阅 URL 不能为空",
-  "subs.edit.validationInterval": "间隔必须大于 0",
-  "subs.edit.validationFilter": "正则表达式无效",
   // settings
   "settings.title": "设置",
   "settings.subtitle": "路由与核心",
@@ -340,7 +262,6 @@ const zh = {
   "settings.xrayVersion": "Xray 版本",
   "settings.tun": "TUN",
   "settings.profiles": "配置",
-  "settings.subscriptions": "订阅",
   "settings.activeProfile": "活动配置",
   "settings.activeSelected": "已选中",
   "settings.activeNone": "无",
@@ -427,8 +348,6 @@ const zh = {
   "settings.dnsHosts": "静态 hosts",
   "settings.dnsHostsPh": "example.com=1.2.3.4\ndomain.net=5.6.7.8",
   "settings.dnsHostsHint": "每行一个 host=ip，或直接填写原始 JSON 对象",
-  "settings.ipv6": "启用 IPv6",
-  "settings.ipv6Sub": "解析并路由 IPv6 地址",
   "settings.socksAuth": "SOCKS 认证",
   "settings.socksUser": "用户名",
   "settings.socksPass": "密码",
@@ -487,10 +406,10 @@ const zh = {
   "backup.merge": "合并",
   "backup.replace": "替换",
   "backup.summary": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { groups = 0, subscriptions = 0 } = vars ?? {};
-    return `${pluralPart(Number(groups), { one: "# 个分组", other: "# 个分组" }, runtime)} · ${pluralPart(Number(subscriptions), { one: "# 个订阅", other: "# 个订阅" }, runtime)}`;
+    const { groups = 0 } = vars ?? {};
+    return `${pluralPart(Number(groups), { one: "# 个分组", other: "# 个分组" }, runtime)}`;
   },
-  "backup.mergeHint": "合并会追加导入的配置/分组/订阅，并覆盖设置。替换会完整覆盖当前的规范状态。",
+  "backup.mergeHint": "合并会追加导入的配置/分组，并覆盖设置。替换会完整覆盖当前的规范状态。",
   "backup.invalidJson": "JSON 无效",
   "backup.invalidStructure": "备份结构无效",
   "backup.copied": "备份已复制",
@@ -505,7 +424,6 @@ const zh = {
   "common.mode.auto": "自动（先代理后直连）",
   "common.mode.proxy": "仅代理",
   "common.mode.direct": "仅直连",
-  "common.proxyNotRunning": "使用“仅代理”模式前，请先启动代理。",
   "common.openFile": "打开文件…",
   // qr
   "qr.scan.title": "扫描二维码",
@@ -566,14 +484,6 @@ const zh = {
   "profiles.row.select": "选择",
   "profiles.row.edit": "编辑",
   "profiles.row.more": "更多",
-  // subscriptions extra
-  "subs.added": "订阅已添加",
-  "subs.saved": "订阅已保存",
-  "subs.deleted": "订阅已删除",
-  "subs.confirmDel.prefix": "删除",
-  "subs.toggleUrl": "切换 URL 显示",
-  "subs.editAction": "编辑",
-  "subs.deleteAction": "删除",
   // routing rule sheet
   "routingSheet.newTitle": "新建路由规则",
   "routingSheet.editTitle": "编辑路由规则",
@@ -609,14 +519,6 @@ const zh = {
   "routingSheet.sourceIpsHint": "使用共享代理端口的设备的地址或 CIDR。",
   "routingSheet.delete": "删除",
   // asset file sheet
-  "assetSheet.addTitle": "添加资源文件",
-  "assetSheet.editTitle": "编辑资源文件",
-  "assetSheet.save": "保存",
-  "assetSheet.filename": "文件名",
-  "assetSheet.filenamePh": "geoip.dat",
-  "assetSheet.url": "URL",
-  "assetSheet.urlPh": "https://github.com/.../download/geoip.dat",
-  "assetSheet.delete": "删除",
   // settings extra
   "settings.routingRulesEditor": "规则编辑器",
   "settings.routingRulesHint": "输入 Xray 风格的路由规则。最终的代理回退规则会自动追加。",
@@ -635,13 +537,11 @@ const zh = {
   "settings.page.routing": "路由",
   "settings.page.network": "DNS 与连接",
   "settings.page.networkSub": "DNS、多路复用、分片、本地端口",
-  "settings.page.resources": "资源文件",
   "settings.page.app": "应用",
   "settings.page.appSub": "自启动、日志、备份",
   "settings.page.about": "关于",
   "settings.page.aboutSub": "版本、更新、诊断",
   "settings.rulesCount": plural("count", { other: "# 条规则" }),
-  "settings.assetCount": plural("count", { other: "# 个文件" }),
   "settings.routingCatchAll": "匹配所有连接 — 下方规则和自动 IP 检查都不会执行。",
   "settings.routingCatchAllRedundant":
     "匹配所有连接。最终回退到代理本就会自动添加，因此此规则只会白白关闭自动 IP 检查。",
@@ -660,21 +560,6 @@ const zh = {
   "settings.routingRuleNoMatch": "无匹配字段",
   "settings.routingReorder": "重新排序规则",
   "settings.routingRulesTitle": "规则",
-  "settings.assetFiles": "资源文件",
-  "settings.assetHint": "这些是 Xray 的 geo 数据库。",
-  "settings.assetUpdateAll": "全部更新",
-  "settings.assetAdd": "添加文件",
-  "settings.assetAutoUpdate": "自动更新",
-  "settings.assetAutoUpdateSub": "按计划刷新 geosite/geoip",
-  "settings.assetUpdateInterval": "更新间隔",
-  "settings.assetAutoUpdateWarning": "地理数据变化时，当前连接会短暂重启以应用新数据。",
-  "settings.assetIntervalHours": plural("count", { other: "每 # 小时" }),
-  "settings.assetIntervalDays": plural("count", { other: "每 # 天" }),
-  "settings.assetDownload": "下载",
-  "settings.assetDelete": "删除",
-  "settings.assetLinks": "geoip.dat / geosite.dat 现成链接",
-  "settings.assetUse": "使用",
-  "settings.assetNotDownloaded": "尚未下载",
   "settings.protocol.vless": "VLESS",
   "settings.protocol.vmess": "VMess",
   "settings.protocol.trojan": "Trojan",
@@ -739,7 +624,6 @@ const zh = {
   "store.service.restarted": "已重启",
   "store.service.stoppedProfileRemoved": "活动配置被移除，因此服务已停止",
   "store.service.stoppedProfileDeleted": "活动配置被删除，因此服务已停止",
-  "store.service.stoppedSubRemoved": "活动配置所属订阅被删除，因此服务已停止",
   "store.service.stoppedBeforeBackupRestore": "恢复备份前已停止服务",
   "store.profile.copySuffix": "副本",
   "store.profile.imported": plural("count", {
@@ -758,24 +642,6 @@ const zh = {
   "store.ping.testFailed": "测试失败：{error}",
   "store.dedup.done": plural("count", { one: "已删除 # 个重复配置", other: "已删除 # 个重复配置" }),
   "store.dedup.none": "未发现重复配置",
-  "store.sub.updateFailed": "更新失败：{name}",
-  "store.sub.updating": "正在更新 {name}…",
-  "store.sub.updatedProfiles": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { count = 0, name = "" } = vars ?? {};
-    return `${name}：${pluralPart(Number(count), { one: "# 个配置", other: "# 个配置" }, runtime)}`;
-  },
-  "store.asset.downloadFailed": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `下载失败（${selectPart(String(mode), { auto: "自动", proxy: "代理", direct: "直连", other: "{value}" }, runtime)}）：${name}`;
-  },
-  "store.asset.downloadFailedReason": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "", reason = "" } = vars ?? {};
-    return `下载失败（${selectPart(String(mode), { auto: "自动", proxy: "代理", direct: "直连", other: "{value}" }, runtime)}）：${name} · ${reason}`;
-  },
-  "store.asset.updated": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `已通过 ${selectPart(String(mode), { auto: "自动", proxy: "代理", direct: "直连", other: "{value}" }, runtime)} 更新 ${name}`;
-  },
   "store.backup.invalidJson": "备份 JSON 无效",
   "store.backup.invalidStructure": "备份结构无效",
   "store.backup.restored": "备份已恢复",

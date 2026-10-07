@@ -28,22 +28,19 @@ export default function Overview({
   onOpenLogs,
   onOpenBackup,
 }: {
-  onNavigate: (screen: "overview" | "profiles" | "subs" | "settings") => void;
+  onNavigate: (screen: "overview" | "profiles" | "settings") => void;
   onOpenLogs: () => void;
   onOpenBackup: () => void;
 }) {
   const profiles = useAppStore((s) => s.profiles);
   const groups = useAppStore((s) => s.groups);
-  const subs = useAppStore((s) => s.subscriptions);
   const service = useAppStore((s) => s.service);
   const downloadRate = useAppStore((s) => s.downloadRate);
   const uploadRate = useAppStore((s) => s.uploadRate);
-  const assetFiles = useAppStore((s) => s.assetFiles);
   const activeId = useAppStore((s) => s.activeId);
   const activePing = useAppStore((s) =>
     activeId ? (s.testResults[activeId]?.ping ?? null) : null,
   );
-  const settings = useAppStore((s) => s.settings);
   const busy = useAppStore((s) => s.busy);
   const toggleService = useAppStore((s) => s.toggleService);
   const restart = useAppStore((s) => s.restart);
@@ -54,7 +51,6 @@ export default function Overview({
   const removeUnreachable = useAppStore((s) => s.removeUnreachable);
   const selectBest = useAppStore((s) => s.selectBest);
   const [pingSheetOpen, setPingSheetOpen] = useState(false);
-  const updateAllSubs = useAppStore((s) => s.updateAllSubs);
   const t = useT();
 
   const recentActivity = useAppStore((s) => s.recentActivity);
@@ -69,15 +65,11 @@ export default function Overview({
     };
   }, []);
 
-  const needsAssets =
-    settings.routingMode !== "global" && !assetFiles.some((a) => a.lastUpdated != null);
-
   const active = profiles.find((p) => p.meta.id === activeId);
   // Backend-resolved core of the active profile (`resolveCores` cache in the store).
   const resolvedCore = useAppStore((s) =>
     activeId ? (s.coreResolutions[activeId]?.resolved ?? null) : null,
   );
-  const enabledSubs = subs.filter((s) => s.enabled).length;
   const connected = service.state === "connected";
   const noInternet = service.state === "noInternet";
   const failed = service.state === "failed";
@@ -239,15 +231,10 @@ export default function Overview({
                 </span>
               </div>
             )}
-            {needsAssets && !up && (
-              <div style={{ fontSize: 13, color: "var(--error)", paddingBottom: 4 }}>
-                {t("overview.needsAssets")}
-              </div>
-            )}
             <div className="primary-actions" style={{ display: "flex", gap: 10 }}>
               <Btn
                 onClick={toggleService}
-                disabled={connecting || (!up && (!activeId || needsAssets))}
+                disabled={connecting || (!up && !activeId)}
                 style={{
                   flex: 2,
                   height: 52,
@@ -278,9 +265,7 @@ export default function Overview({
           </div>
         </Card>
 
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginTop: 12 }}
-        >
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12 }}>
           <Counter
             n={profiles.length}
             label={t("overview.profilesCounter")}
@@ -293,12 +278,6 @@ export default function Overview({
             icon="folder"
             onClick={() => onNavigate("profiles")}
           />
-          <Counter
-            n={enabledSubs}
-            label={t("overview.subsCounter")}
-            icon="cloud_sync"
-            onClick={() => onNavigate("subs")}
-          />
         </div>
 
         <SectionLabel>{t("overview.quickActions")}</SectionLabel>
@@ -307,11 +286,6 @@ export default function Overview({
             icon="dns"
             label={t("overview.openProfiles")}
             onClick={() => onNavigate("profiles")}
-          />
-          <QuickAction
-            icon="cloud_sync"
-            label={t("overview.updateAllSubs")}
-            onClick={updateAllSubs}
           />
           <QuickAction
             icon="speed"

@@ -687,7 +687,7 @@ export function Select<T extends string>({
   );
 }
 
-/** How a download (subscription, geo file) reaches the network. One control so
+/** How a download (geo file) reaches the network. One control so
  *  every place that asks it reads the same. */
 export function UpdateModeControl({
   value,

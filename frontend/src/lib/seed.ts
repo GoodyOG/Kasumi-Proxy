@@ -5,7 +5,6 @@
 // ============================================================
 
 import type {
-  AssetFile,
   Endpoint,
   Meta,
   Profile,
@@ -15,7 +14,7 @@ import type {
   Transport,
 } from "../generated/bindings";
 import { EMPTY_SETTINGS } from "../store/defaults";
-import type { AdvancedSettings, AppState, Subscription } from "./bridge";
+import type { AdvancedSettings, AppState } from "./bridge";
 import { emptyProfile, type ProfileOf } from "./profile-utils";
 
 const uid = () => Math.random().toString(36).slice(2, 9);
@@ -45,54 +44,6 @@ export const GROUPS_SEED = [
   { id: "g-de", name: "🇩🇪 Frankfurt" },
   { id: "g-nl", name: "🇳🇱 Amsterdam" },
   { id: "g-priv", name: "Private" },
-];
-
-export const SUBS_SEED: Subscription[] = [
-  {
-    id: "s-aurora",
-    remarks: "Aurora Net",
-    url: "https://aurora.example.net/api/v1/client/subscribe?token=9f2c1ab7d4e8&flow=xtls-rprx-vision",
-    groupId: "g-de",
-    enabled: true,
-    autoUpdate: true,
-    interval: 360,
-    lastUpdated: "2026-06-05 09:14",
-    count: 14,
-    userAgent: "v2rayNG/1.10.7",
-    filter: "",
-    allowInsecure: false,
-    updateMode: "auto",
-  },
-  {
-    id: "s-nodes",
-    remarks: "NodeHub Pro",
-    url: "https://nodehub.example.io/sub/3a91f0e7c2b5d6489a/auto",
-    groupId: "g-main",
-    enabled: true,
-    autoUpdate: false,
-    interval: 720,
-    lastUpdated: "2026-06-03 22:40",
-    count: 9,
-    userAgent: "",
-    filter: "(?i)premium",
-    allowInsecure: false,
-    updateMode: "proxy",
-  },
-  {
-    id: "s-relay",
-    remarks: "Relay Backup",
-    url: "https://relay.example.org/u/backup.txt",
-    groupId: "g-priv",
-    enabled: false,
-    autoUpdate: false,
-    interval: 180,
-    lastUpdated: "2026-05-28 11:02",
-    count: 6,
-    userAgent: "",
-    filter: "",
-    allowInsecure: true,
-    updateMode: "direct",
-  },
 ];
 
 export const PROFILES_SEED: Profile[] = [
@@ -201,8 +152,6 @@ export const PROFILES_SEED: Profile[] = [
 
 export const ROUTING_RULES_SEED: RoutingRule[] = [];
 
-export const ASSET_FILES_SEED: AssetFile[] = [];
-
 // Demo settings: the runtime defaults with a couple of tweaks to exercise the UI.
 export const SETTINGS_SEED: AdvancedSettings = {
   ...EMPTY_SETTINGS,
@@ -214,9 +163,7 @@ export function seedAppState(): AppState {
   return {
     profiles: PROFILES_SEED,
     groups: GROUPS_SEED,
-    subscriptions: SUBS_SEED,
     routingRules: ROUTING_RULES_SEED,
-    assetFiles: [],
     settings: SETTINGS_SEED,
     activeId: PROFILES_SEED[0].meta.id,
     version: __MODULE_VERSION__,

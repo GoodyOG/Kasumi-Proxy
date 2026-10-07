@@ -109,14 +109,6 @@ export function ruleIcon(rule: RoutingRule): string {
   return "alt_route";
 }
 
-export function formatUpdatedAt(
-  value: number | null,
-  t: Translate,
-  formatters: I18nFormatters,
-): string {
-  return value ? formatters.formatDateTime(value) : t("settings.assetNotDownloaded");
-}
-
 const V2rayNGRulesetItemSchema = RoutingRule_DeserializeSchema.omit({
   id: true,
   remarks: true,

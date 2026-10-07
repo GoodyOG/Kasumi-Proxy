@@ -123,49 +123,6 @@ function applyIntent(state: AppState, intent: MutationIntent): AppState {
       return { ...state, groups: moveItem(state.groups, intent.from, Math.max(pinned, intent.to)) };
     }
 
-    case "upsertSub": {
-      // The intent drags the sub's profiles with its group (mirrors the Rust
-      // UpsertSub arm): the sub still in state is the old one here.
-      const old = state.subscriptions.find((s) => s.id === intent.subscription.id);
-      let profiles = state.profiles;
-      const newG = intent.subscription.groupId ?? null;
-      if (old && newG != null) {
-        const oldG = old.groupId ?? null;
-        if (oldG != null && oldG !== newG) {
-          profiles = profiles.map((p) =>
-            p.meta.subId === intent.subscription.id && p.meta.groupId === oldG
-              ? { ...p, meta: { ...p.meta, groupId: newG } }
-              : p,
-          );
-        } else if (oldG == null) {
-          profiles = profiles.map((p) =>
-            p.meta.subId === intent.subscription.id && p.meta.groupId !== newG
-              ? { ...p, meta: { ...p.meta, groupId: newG } }
-              : p,
-          );
-        }
-      }
-      return {
-        ...state,
-        profiles,
-        subscriptions: upsertById(state.subscriptions, intent.subscription),
-      };
-    }
-    case "removeSub": {
-      const sub = state.subscriptions.find((s) => s.id === intent.id);
-      const group = sub?.groupId ?? null;
-      const profiles = state.profiles.filter((p) => {
-        if (p.meta.subId !== intent.id) return true;
-        if (group != null && p.meta.groupId !== group) return true;
-        return false;
-      });
-      return {
-        ...state,
-        profiles,
-        subscriptions: state.subscriptions.filter((s) => s.id !== intent.id),
-      };
-    }
-
     case "upsertRoutingRule":
       return { ...state, routingRules: upsertById(state.routingRules, intent.rule) };
     case "removeRoutingRule":
@@ -178,11 +135,6 @@ function applyIntent(state: AppState, intent: MutationIntent): AppState {
         routingRules:
           intent.mode === "replace" ? intent.rules : [...state.routingRules, ...intent.rules],
       };
-
-    case "upsertAssetFile":
-      return { ...state, assetFiles: upsertById(state.assetFiles, intent.asset) };
-    case "removeAssetFile":
-      return { ...state, assetFiles: state.assetFiles.filter((a) => a.id !== intent.id) };
 
     case "setSettings":
       return { ...state, settings: intent.settings };
@@ -202,9 +154,7 @@ function applyIntent(state: AppState, intent: MutationIntent): AppState {
         ...state,
         profiles: [...state.profiles, ...incoming.profiles],
         groups: [...state.groups, ...incoming.groups],
-        subscriptions: [...state.subscriptions, ...incoming.subscriptions],
         routingRules: [...state.routingRules, ...incoming.routingRules],
-        assetFiles: [...state.assetFiles, ...incoming.assetFiles],
         settings: mergeSettings(incoming.settings),
       };
     }

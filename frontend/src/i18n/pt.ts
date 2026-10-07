@@ -2,7 +2,7 @@
 // i18n/pt.ts
 // Full Portuguese dictionary.
 // ============================================================
-import { plural, pluralPart, selectPart } from "./messages";
+import { plural, pluralPart } from "./messages";
 import type { MessageRuntime, MessageValue, Vars } from "./runtime";
 
 const pt = {
@@ -11,7 +11,6 @@ const pt = {
   // nav
   "nav.overview": "Visão geral",
   "nav.profiles": "Perfis",
-  "nav.subs": "Assinaturas",
   "nav.settings": "Configurações",
   // overview
   "overview.title": "Kasumi Proxy",
@@ -24,8 +23,6 @@ const pt = {
   "overview.noInternet": "Sem internet",
   "overview.failed": "Falhou",
   "overview.noActiveProfile": "Nenhum perfil ativo selecionado",
-  "overview.needsAssets":
-    "Baixe os arquivos de recursos geográficos antes de usar este modo de roteamento.",
   "overview.download": "Download",
   "overview.upload": "Upload",
   "overview.uptime": "Tempo ativo",
@@ -42,10 +39,8 @@ const pt = {
   "tray.recent": "Perfis recentes",
   "overview.profilesCounter": "Perfis",
   "overview.groupsCounter": "Grupos",
-  "overview.subsCounter": "Assinaturas",
   "overview.quickActions": "Ações rápidas",
   "overview.openProfiles": "Abrir perfis",
-  "overview.updateAllSubs": "Atualizar todas as assinaturas",
   "overview.pingAll": "Testar ping de todos",
   "overview.backupRestore": "Backup e restauração",
   "overview.recentActivity": "Atividade recente",
@@ -57,7 +52,6 @@ const pt = {
     one: "Importado # perfil",
     other: "Importados # perfis",
   }),
-  "activity.subUpdated": "Assinatura atualizada · {name}",
   "activity.pingComplete": plural("count", {
     one: "Ping concluído · # perfil",
     other: "Ping concluído · # perfis",
@@ -76,8 +70,6 @@ const pt = {
     one: "Removida # duplicata",
     other: "Removidas # duplicatas",
   }),
-  "activity.assetDownloaded": "Recurso atualizado · {name}",
-  "activity.assetRestart": "Conexão reiniciada para aplicar os novos dados geográficos",
   "activity.profileSaved": "Perfil salvo · {remarks}",
   "time.now": "agora",
   "time.ago": "há {n}{unit}",
@@ -266,77 +258,6 @@ const pt = {
   "editor.acceptProxyProtocol": "Aceitar PROXY protocol",
   "editor.vmessGlobalPadding": "Preenchimento global",
   "editor.vmessAuthenticatedLength": "Comprimento autenticado",
-  // subscriptions
-  "subs.title": "Assinaturas",
-  "subs.subtitle": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { active = 0, imported = 0 } = vars ?? {};
-    return `${pluralPart(Number(active), { one: "# assinatura ativa", other: "# assinaturas ativas" }, runtime)} · ${pluralPart(Number(imported), { one: "# perfil importado", other: "# perfis importados" }, runtime)}`;
-  },
-  "subs.updateAll": "Atualizar tudo",
-  "subs.add": "Adicionar",
-  "subs.add.manual": "Adicionar manualmente",
-  "subs.add.manualSub": "Uma assinatura com opções",
-  "subs.add.paste": "Colar uma lista",
-  "subs.add.pasteSub": "Vários URLs ou JSON exportado",
-  "subs.export": "Exportar",
-  "subs.copyUrl": "Copiar URL",
-  "subs.urlCopied": "URL copiada",
-  "subs.exportHint":
-    "Copie suas assinaturas para a área de transferência para fazer backup ou movê-las para outro dispositivo.",
-  "subs.exportUrls": "Copiar URLs",
-  "subs.exportJson": "Copiar como JSON",
-  "subs.exportEmpty": "Nenhuma assinatura para exportar",
-  "subs.import": "Importar",
-  "subs.importLabel": "URLs de assinaturas ou JSON",
-  "subs.importHint":
-    "Cole URLs de assinaturas (uma por linha) ou um JSON exportado de outro dispositivo.",
-  "subs.importBtn": "Importar",
-  "subs.importEmpty": "Nada para importar",
-  "subs.importInvalid": "Não foi possível analisar a entrada",
-  "subs.imported": plural("count", {
-    one: "# assinatura importada",
-    other: "# assinaturas importadas",
-  }),
-  "subs.exportCopied": plural("count", {
-    one: "# assinatura copiada",
-    other: "# assinaturas copiadas",
-  }),
-  "subs.addBtn": "Adicionar assinatura",
-  "subs.infoText":
-    "Cada assinatura importa seus servidores para um grupo selecionado. Ao atualizar, esses perfis são renovados mantendo sua seleção ativa sempre que possível.",
-  "subs.autoLabel": "Auto · {interval}",
-  "subs.manualLabel": "Manual",
-  "subs.insecureLabel": "Inseguro",
-  "subs.errorLabel": "Erro",
-  "subs.updateBtn": "Atualizar",
-  "subs.neverUpdated": "nunca",
-  "subs.updatedAt": "atualizado em {date}",
-  "subs.profilesCount": plural("n", { one: "# perfil", other: "# perfis" }),
-  "subs.confirmDel.title": "Excluir assinatura?",
-  "subs.confirmDel.body": "Os perfis importados desta fonte também serão removidos.",
-  "subs.confirmDel.cancel": "Cancelar",
-  "subs.confirmDel.delete": "Excluir",
-  "subs.edit.newTitle": "Adicionar assinatura",
-  "subs.edit.editTitle": "Editar assinatura",
-  "subs.edit.save": "Salvar",
-  "subs.edit.remarks": "Nome",
-  "subs.edit.remarksPh": "Meu provedor",
-  "subs.edit.url": "URL da assinatura",
-  "subs.edit.urlPh": "https://…",
-  "subs.edit.targetGroup": "Grupo de destino",
-  "subs.edit.userAgent": "User-Agent",
-  "subs.edit.userAgentPh": "padrão",
-  "subs.edit.filter": "Filtro (regex)",
-  "subs.edit.filterPh": "(?i)premium",
-  "subs.autoUpdate": "Atualização automática",
-  "subs.autoUpdateSub": "Atualizar em um intervalo programado",
-  "subs.interval": "Intervalo (hh:mm)",
-  "subs.edit.urlInsecureHint":
-    "HTTP não criptografado — esta assinatura pode ser adulterada em trânsito.",
-  "subs.edit.validationRemarks": "Nome obrigatório",
-  "subs.edit.validationUrl": "URL da assinatura obrigatória",
-  "subs.edit.validationInterval": "O intervalo deve ser maior que 0",
-  "subs.edit.validationFilter": "Regex inválida",
   // settings
   "settings.title": "Configurações",
   "settings.subtitle": "Roteamento e núcleo",
@@ -345,7 +266,6 @@ const pt = {
   "settings.xrayVersion": "Versão do Xray",
   "settings.tun": "TUN",
   "settings.profiles": "Perfis",
-  "settings.subscriptions": "Assinaturas",
   "settings.activeProfile": "Perfil ativo",
   "settings.activeSelected": "selecionado",
   "settings.activeNone": "nenhum",
@@ -435,8 +355,6 @@ const pt = {
   "settings.dnsHosts": "Hosts estáticos",
   "settings.dnsHostsPh": "example.com=1.2.3.4\ndomain.net=5.6.7.8",
   "settings.dnsHostsHint": "Um host=ip por linha ou um objeto JSON bruto",
-  "settings.ipv6": "Ativar IPv6",
-  "settings.ipv6Sub": "Resolver e rotear endereços IPv6",
   "settings.socksAuth": "Autenticação SOCKS",
   "settings.socksUser": "Nome de usuário",
   "settings.socksPass": "Senha",
@@ -496,11 +414,11 @@ const pt = {
   "backup.merge": "Mesclar",
   "backup.replace": "Substituir",
   "backup.summary": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { groups = 0, subscriptions = 0 } = vars ?? {};
-    return `${pluralPart(Number(groups), { one: "# grupo", other: "# grupos" }, runtime)} · ${pluralPart(Number(subscriptions), { one: "# assinatura", other: "# assinaturas" }, runtime)}`;
+    const { groups = 0 } = vars ?? {};
+    return `${pluralPart(Number(groups), { one: "# grupo", other: "# grupos" }, runtime)}`;
   },
   "backup.mergeHint":
-    "Mesclar adiciona perfis/grupos/assinaturas importados e sobrepõe as configurações. Substituir sobrescreve completamente o estado canônico atual.",
+    "Mesclar adiciona perfis/grupos importados e sobrepõe as configurações. Substituir sobrescreve completamente o estado canônico atual.",
   "backup.invalidJson": "JSON inválido",
   "backup.invalidStructure": "Estrutura de backup inválida",
   "backup.copied": "Backup copiado",
@@ -515,7 +433,6 @@ const pt = {
   "common.mode.auto": "Automático (proxy, depois direto)",
   "common.mode.proxy": "Somente proxy",
   "common.mode.direct": "Somente direto",
-  "common.proxyNotRunning": "Inicie o proxy antes de usar o modo Somente proxy.",
   "common.openFile": "Abrir arquivo…",
   // qr
   "qr.scan.title": "Escanear código QR",
@@ -576,14 +493,6 @@ const pt = {
   "profiles.row.select": "Selecionar",
   "profiles.row.edit": "Editar",
   "profiles.row.more": "Mais",
-  // subscriptions extra
-  "subs.added": "Assinatura adicionada",
-  "subs.saved": "Assinatura salva",
-  "subs.deleted": "Assinatura excluída",
-  "subs.confirmDel.prefix": "Remover",
-  "subs.toggleUrl": "Alternar URL",
-  "subs.editAction": "Editar",
-  "subs.deleteAction": "Excluir",
   // routing rule sheet
   "routingSheet.newTitle": "Nova regra de roteamento",
   "routingSheet.editTitle": "Editar regra de roteamento",
@@ -620,14 +529,6 @@ const pt = {
     "Endereços ou CIDRs dos dispositivos que usam a porta de proxy compartilhada.",
   "routingSheet.delete": "Excluir",
   // asset file sheet
-  "assetSheet.addTitle": "Adicionar arquivo de recurso",
-  "assetSheet.editTitle": "Editar arquivo de recurso",
-  "assetSheet.save": "Salvar",
-  "assetSheet.filename": "Nome do arquivo",
-  "assetSheet.filenamePh": "geoip.dat",
-  "assetSheet.url": "URL",
-  "assetSheet.urlPh": "https://github.com/.../download/geoip.dat",
-  "assetSheet.delete": "Excluir",
   // settings extra
   "settings.routingRulesEditor": "Editor de regras",
   "settings.routingRulesHint":
@@ -647,13 +548,11 @@ const pt = {
   "settings.page.routing": "Roteamento",
   "settings.page.network": "DNS e conexão",
   "settings.page.networkSub": "DNS, mux, fragmentação, portas locais",
-  "settings.page.resources": "Arquivos de recursos",
   "settings.page.app": "Aplicativo",
   "settings.page.appSub": "início automático, registros, backup",
   "settings.page.about": "Sobre",
   "settings.page.aboutSub": "Versão, atualizações, diagnóstico",
   "settings.rulesCount": plural("count", { one: "# regra", other: "# regras" }),
-  "settings.assetCount": plural("count", { one: "# arquivo", other: "# arquivos" }),
   "settings.routingCatchAll":
     "Corresponde a todas as conexões — as regras abaixo e a verificação automática de IP nunca são executadas.",
   "settings.routingCatchAllRedundant":
@@ -673,22 +572,6 @@ const pt = {
   "settings.routingRuleNoMatch": "Nenhum campo de correspondência",
   "settings.routingReorder": "Reordenar regra",
   "settings.routingRulesTitle": "Regras",
-  "settings.assetFiles": "Arquivos de recurso",
-  "settings.assetHint": "Estas são bases geo do Xray.",
-  "settings.assetUpdateAll": "Atualizar tudo",
-  "settings.assetAdd": "Adicionar arquivo",
-  "settings.assetAutoUpdate": "Atualização automática",
-  "settings.assetAutoUpdateSub": "Atualizar geosite/geoip por agendamento",
-  "settings.assetUpdateInterval": "Intervalo de atualização",
-  "settings.assetAutoUpdateWarning":
-    "Quando os dados geográficos mudam, a conexão ativa reinicia brevemente para aplicá-los.",
-  "settings.assetIntervalHours": plural("count", { one: "A cada # hora", other: "A cada # horas" }),
-  "settings.assetIntervalDays": plural("count", { one: "A cada # dia", other: "A cada # dias" }),
-  "settings.assetDownload": "Baixar",
-  "settings.assetDelete": "Excluir",
-  "settings.assetLinks": "Links prontos para geoip.dat / geosite.dat",
-  "settings.assetUse": "Usar",
-  "settings.assetNotDownloaded": "Ainda não baixado",
   "settings.protocol.vless": "VLESS",
   "settings.protocol.vmess": "VMess",
   "settings.protocol.trojan": "Trojan",
@@ -754,8 +637,6 @@ const pt = {
   "store.service.restarted": "Reiniciado",
   "store.service.stoppedProfileRemoved": "O serviço foi parado porque o perfil ativo foi removido",
   "store.service.stoppedProfileDeleted": "O serviço foi parado porque o perfil ativo foi excluído",
-  "store.service.stoppedSubRemoved":
-    "O serviço foi parado porque a assinatura do perfil ativo foi removida",
   "store.service.stoppedBeforeBackupRestore": "O serviço foi parado antes da restauração do backup",
   "store.profile.copySuffix": "cópia",
   "store.profile.imported": plural("count", {
@@ -777,24 +658,6 @@ const pt = {
     other: "# duplicados removidos",
   }),
   "store.dedup.none": "Nenhum duplicado encontrado",
-  "store.sub.updateFailed": "Falha ao atualizar: {name}",
-  "store.sub.updating": "Atualizando {name}…",
-  "store.sub.updatedProfiles": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { count = 0, name = "" } = vars ?? {};
-    return `${name}: ${pluralPart(Number(count), { one: "# perfil", other: "# perfis" }, runtime)}`;
-  },
-  "store.asset.downloadFailed": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `Falha no download (${selectPart(String(mode), { auto: "automático", proxy: "proxy", direct: "direto", other: "{value}" }, runtime)}): ${name}`;
-  },
-  "store.asset.downloadFailedReason": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "", reason = "" } = vars ?? {};
-    return `Falha no download (${selectPart(String(mode), { auto: "automático", proxy: "proxy", direct: "direto", other: "{value}" }, runtime)}): ${name} · ${reason}`;
-  },
-  "store.asset.updated": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `${name} atualizado via ${selectPart(String(mode), { auto: "automático", proxy: "proxy", direct: "direto", other: "{value}" }, runtime)}`;
-  },
   "store.backup.invalidJson": "JSON de backup inválido",
   "store.backup.invalidStructure": "Estrutura de backup inválida",
   "store.backup.restored": "Backup restaurado",

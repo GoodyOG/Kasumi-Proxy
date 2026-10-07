@@ -24,7 +24,7 @@ type MigrationStep = fn(&mut Value);
 
 /// The ordered migration ladder. Index `i` lifts version `i` to `i + 1`; append a
 /// new step (never reorder or delete) whenever the on-disk schema changes.
-const MIGRATIONS: &[MigrationStep] = &[migrate_v0_to_v1];
+const MIGRATIONS: &[MigrationStep] = &[migrate_v0_to_v1, migrate_v1_to_v2];
 
 /// The schema version the current code writes (the length of the ladder).
 pub const SCHEMA_VERSION: u32 = MIGRATIONS.len() as u32;
@@ -52,6 +52,14 @@ fn migrate_v0_to_v1(v: &mut Value) {
         for p in arr {
             migrate_profile(p);
         }
+    }
+}
+
+/// v1 → v2: strict routing (kill-switch) is now the default; existing installs
+/// get it turned on.
+fn migrate_v1_to_v2(v: &mut Value) {
+    if let Some(settings) = v.get_mut("settings").and_then(Value::as_object_mut) {
+        settings.insert("strictRoute".into(), Value::from(true));
     }
 }
 

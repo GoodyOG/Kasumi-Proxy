@@ -2,7 +2,7 @@
 // i18n/ar.ts
 // Full Arabic dictionary.
 // ============================================================
-import { plural, pluralPart, selectPart } from "./messages";
+import { plural, pluralPart } from "./messages";
 import type { MessageRuntime, MessageValue, Vars } from "./runtime";
 
 const ar = {
@@ -11,7 +11,6 @@ const ar = {
   // nav
   "nav.overview": "نظرة عامة",
   "nav.profiles": "الملفات التعريفية",
-  "nav.subs": "الاشتراكات",
   "nav.settings": "الإعدادات",
   // overview
   "overview.title": "Kasumi Proxy",
@@ -24,7 +23,6 @@ const ar = {
   "overview.noInternet": "لا يوجد إنترنت",
   "overview.failed": "فشل",
   "overview.noActiveProfile": "لم يتم اختيار ملف تعريف نشط",
-  "overview.needsAssets": "قم بتنزيل ملفات الموارد الجغرافية قبل استخدام هذا وضع التوجيه.",
   "overview.download": "التنزيل",
   "overview.upload": "الرفع",
   "overview.uptime": "مدة التشغيل",
@@ -41,10 +39,8 @@ const ar = {
   "tray.recent": "الملفات الأخيرة",
   "overview.profilesCounter": "الملفات التعريفية",
   "overview.groupsCounter": "المجموعات",
-  "overview.subsCounter": "الاشتراكات",
   "overview.quickActions": "إجراءات سريعة",
   "overview.openProfiles": "فتح الملفات التعريفية",
-  "overview.updateAllSubs": "تحديث جميع الاشتراكات",
   "overview.pingAll": "اختبار Ping للجميع",
   "overview.backupRestore": "نسخ احتياطي واستعادة",
   "overview.recentActivity": "النشاط الأخير",
@@ -59,7 +55,6 @@ const ar = {
     many: "تم استيراد # ملف تعريفي",
     other: "تم استيراد # ملف تعريفي",
   }),
-  "activity.subUpdated": "تم تحديث الاشتراك · {name}",
   "activity.pingComplete": plural("count", {
     one: "اكتمل الاختبار · ملف تعريفي واحد",
     two: "اكتمل الاختبار · ملفان تعريفيان",
@@ -90,8 +85,6 @@ const ar = {
     many: "تم حذف # تكرارًا",
     other: "تم حذف # تكرار",
   }),
-  "activity.assetDownloaded": "تم تحديث المورد · {name}",
-  "activity.assetRestart": "تمت إعادة تشغيل الاتصال لتطبيق بيانات الموقع الجغرافي الجديدة",
   "activity.profileSaved": "تم حفظ الملف التعريفي · {remarks}",
   "time.now": "الآن",
   "time.ago": "منذ {n}{unit}",
@@ -302,111 +295,6 @@ const ar = {
   "editor.acceptProxyProtocol": "قبول بروتوكول PROXY",
   "editor.vmessGlobalPadding": "الحشو العام",
   "editor.vmessAuthenticatedLength": "الطول المُوثَّق",
-  // subscriptions
-  "subs.title": "الاشتراكات",
-  "subs.subtitle": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { active = 0, imported = 0 } = vars ?? {};
-    return `${pluralPart(
-      Number(active),
-      {
-        zero: "لا اشتراكات نشطة",
-        one: "اشتراك نشط واحد",
-        two: "اشتراكان نشطان",
-        few: "# اشتراكات نشطة",
-        many: "# اشتراكًا نشطًا",
-        other: "# اشتراك نشط",
-      },
-      runtime,
-    )} · ${pluralPart(
-      Number(imported),
-      {
-        zero: "لا ملفات تعريف مستوردة",
-        one: "ملف تعريف مستورد واحد",
-        two: "ملفا تعريف مستوردان",
-        few: "# ملفات تعريف مستوردة",
-        many: "# ملف تعريف مستورد",
-        other: "# ملف تعريف مستورد",
-      },
-      runtime,
-    )}`;
-  },
-  "subs.updateAll": "تحديث الكل",
-  "subs.add": "إضافة",
-  "subs.add.manual": "إضافة يدويًا",
-  "subs.add.manualSub": "اشتراك واحد مع الخيارات",
-  "subs.add.paste": "لصق قائمة",
-  "subs.add.pasteSub": "عدة روابط أو JSON مُصدَّر",
-  "subs.export": "تصدير",
-  "subs.copyUrl": "نسخ الرابط",
-  "subs.urlCopied": "تم نسخ الرابط",
-  "subs.exportHint": "انسخ اشتراكاتك إلى الحافظة لإنشاء نسخة احتياطية أو نقلها إلى جهاز آخر.",
-  "subs.exportUrls": "نسخ عناوين URL",
-  "subs.exportJson": "نسخ بصيغة JSON",
-  "subs.exportEmpty": "لا توجد اشتراكات للتصدير",
-  "subs.import": "استيراد",
-  "subs.importLabel": "عناوين URL للاشتراكات أو JSON",
-  "subs.importHint": "الصق عناوين URL للاشتراكات (واحد في كل سطر) أو ملف JSON مُصدَّر من جهاز آخر.",
-  "subs.importBtn": "استيراد",
-  "subs.importEmpty": "لا شيء للاستيراد",
-  "subs.importInvalid": "تعذّر تحليل المدخلات",
-  "subs.imported": plural("count", {
-    zero: "لم يتم استيراد أي اشتراك",
-    one: "تم استيراد اشتراك واحد",
-    two: "تم استيراد اشتراكين",
-    few: "تم استيراد # اشتراكات",
-    many: "تم استيراد # اشتراكًا",
-    other: "تم استيراد # اشتراك",
-  }),
-  "subs.exportCopied": plural("count", {
-    zero: "لم يتم نسخ أي اشتراك",
-    one: "تم نسخ اشتراك واحد",
-    two: "تم نسخ اشتراكين",
-    few: "تم نسخ # اشتراكات",
-    many: "تم نسخ # اشتراكًا",
-    other: "تم نسخ # اشتراك",
-  }),
-  "subs.addBtn": "إضافة اشتراك",
-  "subs.infoText":
-    "يستورد كل اشتراك خوادمه إلى مجموعة محددة. وعند التحديث تُحدَّث تلك الملفات التعريفية مع الحفاظ على اختيارك النشط قدر الإمكان.",
-  "subs.autoLabel": "تلقائي · {interval}",
-  "subs.manualLabel": "يدوي",
-  "subs.insecureLabel": "غير آمن",
-  "subs.errorLabel": "خطأ",
-  "subs.updateBtn": "تحديث",
-  "subs.neverUpdated": "أبدًا",
-  "subs.updatedAt": "آخر تحديث {date}",
-  "subs.profilesCount": plural("n", {
-    zero: "لا ملفات تعريف",
-    one: "ملف تعريف واحد",
-    two: "ملفا تعريف",
-    few: "# ملفات تعريف",
-    many: "# ملف تعريف",
-    other: "# ملف تعريف",
-  }),
-  "subs.confirmDel.title": "حذف الاشتراك؟",
-  "subs.confirmDel.body": "سيتم أيضًا حذف الملفات التعريفية المستوردة من هذا المصدر.",
-  "subs.confirmDel.cancel": "إلغاء",
-  "subs.confirmDel.delete": "حذف",
-  "subs.edit.newTitle": "إضافة اشتراك",
-  "subs.edit.editTitle": "تعديل الاشتراك",
-  "subs.edit.save": "حفظ",
-  "subs.edit.remarks": "الاسم",
-  "subs.edit.remarksPh": "مزودي",
-  "subs.edit.url": "رابط الاشتراك",
-  "subs.edit.urlPh": "https://…",
-  "subs.edit.targetGroup": "المجموعة المستهدفة",
-  "subs.edit.userAgent": "User-Agent",
-  "subs.edit.userAgentPh": "الافتراضي",
-  "subs.edit.filter": "عامل التصفية (regex)",
-  "subs.edit.filterPh": "(?i)premium",
-  "subs.autoUpdate": "تحديث تلقائي",
-  "subs.autoUpdateSub": "التحديث وفق جدول زمني",
-  "subs.interval": "الفاصل (hh:mm)",
-  "subs.edit.urlInsecureHint": "HTTP غير مشفّر — قد يتم العبث بهذا الاشتراك أثناء النقل.",
-  "subs.edit.validationRemarks": "الاسم مطلوب",
-  "subs.edit.validationUrl": "رابط الاشتراك مطلوب",
-  "subs.edit.validationInterval": "يجب أن يكون الفاصل أكبر من 0",
-  "subs.edit.validationFilter": "regex غير صالح",
   // settings
   "settings.title": "الإعدادات",
   "settings.subtitle": "التوجيه والمحرك",
@@ -415,7 +303,6 @@ const ar = {
   "settings.xrayVersion": "إصدار Xray",
   "settings.tun": "TUN",
   "settings.profiles": "الملفات التعريفية",
-  "settings.subscriptions": "الاشتراكات",
   "settings.activeProfile": "الملف التعريفي النشط",
   "settings.activeSelected": "محدد",
   "settings.activeNone": "لا يوجد",
@@ -505,8 +392,6 @@ const ar = {
   "settings.dnsHosts": "Hosts ثابتة",
   "settings.dnsHostsPh": "example.com=1.2.3.4\ndomain.net=5.6.7.8",
   "settings.dnsHostsHint": "مضيف=IP واحد في كل سطر أو كائن JSON خام",
-  "settings.ipv6": "تفعيل IPv6",
-  "settings.ipv6Sub": "حلّ وتوجيه عناوين IPv6",
   "settings.socksAuth": "مصادقة SOCKS",
   "settings.socksUser": "اسم المستخدم",
   "settings.socksPass": "كلمة المرور",
@@ -566,7 +451,7 @@ const ar = {
   "backup.merge": "دمج",
   "backup.replace": "استبدال",
   "backup.summary": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { groups = 0, subscriptions = 0 } = vars ?? {};
+    const { groups = 0 } = vars ?? {};
     return `${pluralPart(
       Number(groups),
       {
@@ -578,21 +463,10 @@ const ar = {
         other: "# مجموعة",
       },
       runtime,
-    )} · ${pluralPart(
-      Number(subscriptions),
-      {
-        zero: "لا اشتراكات",
-        one: "اشتراك واحد",
-        two: "اشتراكان",
-        few: "# اشتراكات",
-        many: "# اشتراكًا",
-        other: "# اشتراك",
-      },
-      runtime,
     )}`;
   },
   "backup.mergeHint":
-    "يضيف وضع الدمج الملفات التعريفية/المجموعات/الاشتراكات المستوردة ويطبّق الإعدادات فوقها. أما وضع الاستبدال فيعيد كتابة الحالة الحالية بالكامل.",
+    "يضيف وضع الدمج الملفات التعريفية/المجموعات المستوردة ويطبّق الإعدادات فوقها. أما وضع الاستبدال فيعيد كتابة الحالة الحالية بالكامل.",
   "backup.invalidJson": "JSON غير صالح",
   "backup.invalidStructure": "بنية النسخة الاحتياطية غير صالحة",
   "backup.copied": "تم نسخ النسخة الاحتياطية",
@@ -607,7 +481,6 @@ const ar = {
   "common.mode.auto": "تلقائي (الوكيل ثم مباشر)",
   "common.mode.proxy": "عبر الوكيل فقط",
   "common.mode.direct": "مباشر فقط",
-  "common.proxyNotRunning": "شغّل الوكيل أولًا قبل استخدام وضع " + '"عبر الوكيل فقط".',
   "common.openFile": "فتح ملف…",
   // qr
   "qr.scan.title": "مسح رمز QR",
@@ -693,14 +566,6 @@ const ar = {
   "profiles.row.select": "تحديد",
   "profiles.row.edit": "تعديل",
   "profiles.row.more": "المزيد",
-  // subscriptions extra
-  "subs.added": "تمت إضافة الاشتراك",
-  "subs.saved": "تم حفظ الاشتراك",
-  "subs.deleted": "تم حذف الاشتراك",
-  "subs.confirmDel.prefix": "إزالة",
-  "subs.toggleUrl": "إظهار/إخفاء الرابط",
-  "subs.editAction": "تعديل",
-  "subs.deleteAction": "حذف",
   // routing rule sheet
   "routingSheet.newTitle": "قاعدة توجيه جديدة",
   "routingSheet.editTitle": "تعديل قاعدة التوجيه",
@@ -736,14 +601,6 @@ const ar = {
   "routingSheet.sourceIpsHint": "عناوين أو CIDR للأجهزة التي تستخدم منفذ الوكيل المشترك.",
   "routingSheet.delete": "حذف",
   // asset file sheet
-  "assetSheet.addTitle": "إضافة ملف موارد",
-  "assetSheet.editTitle": "تعديل ملف الموارد",
-  "assetSheet.save": "حفظ",
-  "assetSheet.filename": "اسم الملف",
-  "assetSheet.filenamePh": "geoip.dat",
-  "assetSheet.url": "الرابط",
-  "assetSheet.urlPh": "https://github.com/.../download/geoip.dat",
-  "assetSheet.delete": "حذف",
   // settings extra
   "settings.routingRulesEditor": "محرر القواعد",
   "settings.routingRulesHint":
@@ -763,7 +620,6 @@ const ar = {
   "settings.page.routing": "التوجيه",
   "settings.page.network": "DNS والاتصال",
   "settings.page.networkSub": "DNS، mux، التجزئة، المنافذ المحلية",
-  "settings.page.resources": "ملفات الموارد",
   "settings.page.app": "التطبيق",
   "settings.page.appSub": "التشغيل التلقائي، السجلات، النسخ الاحتياطي",
   "settings.page.about": "حول",
@@ -774,13 +630,6 @@ const ar = {
     few: "# قواعد",
     many: "# قاعدة",
     other: "# قاعدة",
-  }),
-  "settings.assetCount": plural("count", {
-    one: "ملف واحد",
-    two: "ملفان",
-    few: "# ملفات",
-    many: "# ملفًا",
-    other: "# ملف",
   }),
   "settings.routingCatchAll": "يطابق كل اتصال — القواعد أدناه وفحص IP التلقائي لن تُنفَّذ.",
   "settings.routingCatchAllRedundant":
@@ -808,36 +657,6 @@ const ar = {
   "settings.routingRuleNoMatch": "لا توجد حقول مطابقة",
   "settings.routingReorder": "إعادة ترتيب القاعدة",
   "settings.routingRulesTitle": "القواعد",
-  "settings.assetFiles": "ملفات الموارد",
-  "settings.assetHint": "هذه قواعد بيانات جغرافية خاصة بـ Xray.",
-  "settings.assetUpdateAll": "تحديث الكل",
-  "settings.assetAdd": "إضافة ملف",
-  "settings.assetAutoUpdate": "تحديث تلقائي",
-  "settings.assetAutoUpdateSub": "تحديث geosite/geoip وفق جدول زمني",
-  "settings.assetUpdateInterval": "فترة التحديث",
-  "settings.assetAutoUpdateWarning":
-    "عند تغيّر بيانات الموقع الجغرافي، يُعاد تشغيل الاتصال النشط لفترة وجيزة لتطبيقها.",
-  "settings.assetIntervalHours": plural("count", {
-    zero: "كل # ساعة",
-    one: "كل ساعة",
-    two: "كل ساعتين",
-    few: "كل # ساعات",
-    many: "كل # ساعة",
-    other: "كل # ساعة",
-  }),
-  "settings.assetIntervalDays": plural("count", {
-    zero: "كل # يوم",
-    one: "كل يوم",
-    two: "كل يومين",
-    few: "كل # أيام",
-    many: "كل # يومًا",
-    other: "كل # يوم",
-  }),
-  "settings.assetDownload": "تنزيل",
-  "settings.assetDelete": "حذف",
-  "settings.assetLinks": "روابط جاهزة لـ geoip.dat / geosite.dat",
-  "settings.assetUse": "استخدام",
-  "settings.assetNotDownloaded": "لم يتم تنزيله بعد",
   "settings.protocol.vless": "VLESS",
   "settings.protocol.vmess": "VMess",
   "settings.protocol.trojan": "Trojan",
@@ -910,7 +729,6 @@ const ar = {
   "store.service.restarted": "تمت إعادة التشغيل",
   "store.service.stoppedProfileRemoved": "تم إيقاف الخدمة لأن الملف التعريفي النشط تمت إزالته",
   "store.service.stoppedProfileDeleted": "تم إيقاف الخدمة لأن الملف التعريفي النشط تم حذفه",
-  "store.service.stoppedSubRemoved": "تم إيقاف الخدمة لأن اشتراك الملف التعريفي النشط تمت إزالته",
   "store.service.stoppedBeforeBackupRestore": "تم إيقاف الخدمة قبل استعادة النسخة الاحتياطية",
   "store.profile.copySuffix": "copy",
   "store.profile.imported": plural("count", {
@@ -942,47 +760,6 @@ const ar = {
     other: "تم حذف # تكرار",
   }),
   "store.dedup.none": "لا توجد تكرارات",
-  "store.sub.updateFailed": "فشل التحديث: {name}",
-  "store.sub.updating": "جارٍ تحديث {name}…",
-  "store.sub.updatedProfiles": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { count = 0, name = "" } = vars ?? {};
-    return `${name}: ${pluralPart(
-      Number(count),
-      {
-        zero: "لا ملفات تعريف",
-        one: "ملف تعريف واحد",
-        two: "ملفا تعريف",
-        few: "# ملفات تعريف",
-        many: "# ملف تعريف",
-        other: "# ملف تعريف",
-      },
-      runtime,
-    )}`;
-  },
-  "store.asset.downloadFailed": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `فشل التنزيل (${selectPart(
-      String(mode),
-      { auto: "تلقائي", proxy: "وكيل", direct: "مباشر", other: "{value}" },
-      runtime,
-    )}): ${name}`;
-  },
-  "store.asset.downloadFailedReason": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "", reason = "" } = vars ?? {};
-    return `فشل التنزيل (${selectPart(
-      String(mode),
-      { auto: "تلقائي", proxy: "وكيل", direct: "مباشر", other: "{value}" },
-      runtime,
-    )}): ${name} · ${reason}`;
-  },
-  "store.asset.updated": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `تم تحديث ${name} عبر ${selectPart(
-      String(mode),
-      { auto: "الوضع التلقائي", proxy: "الوكيل", direct: "الوضع المباشر", other: "{value}" },
-      runtime,
-    )}`;
-  },
   "store.backup.invalidJson": "JSON النسخة الاحتياطية غير صالح",
   "store.backup.invalidStructure": "بنية النسخة الاحتياطية غير صالحة",
   "store.backup.restored": "تمت استعادة النسخة الاحتياطية",

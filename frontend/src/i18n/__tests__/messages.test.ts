@@ -11,25 +11,10 @@ describe("i18n message helpers", () => {
     expect(translate("en", "profiles.subtitle", { servers: 1, groups: 2 })).toBe(
       "1 server · 2 groups",
     );
-    expect(translate("en", "subs.subtitle", { active: 2, imported: 1 })).toBe(
-      "2 active subscriptions · 1 imported profile",
-    );
   });
 
   it("handles pluralized store notifications", () => {
     expect(translate("en", "store.profile.imported", { count: 1 })).toBe("Imported 1 profile");
-    expect(translate("en", "store.sub.updatedProfiles", { name: "Demo", count: 4 })).toBe(
-      "Demo: 4 profiles",
-    );
-  });
-
-  it("handles select-style mode labels", () => {
-    expect(translate("en", "store.asset.updated", { mode: "auto", name: "geoip.dat" })).toBe(
-      "Updated geoip.dat via automatic",
-    );
-    expect(
-      translate("en", "store.asset.downloadFailed", { mode: "proxy", name: "geoip.dat" }),
-    ).toBe("Download failed (proxy): geoip.dat");
   });
 
   it("auto-detects base browser languages from regional variants", () => {

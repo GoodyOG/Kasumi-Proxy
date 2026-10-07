@@ -1,14 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AssetFile, Profile } from "../generated/bindings";
+import type { Profile } from "../generated/bindings";
 import type {
   AdvancedSettings,
   AppState,
-  AssetsUpdatedEvent,
   Bridge,
   LogTarget,
   ServiceStatus,
-  SubAppliedEvent,
-  Subscription,
 } from "../lib/bridge";
 import { emptyProfile } from "../lib/profile-utils";
 
@@ -68,37 +65,6 @@ function makeVless(overrides: VlessOverrides = {}): Vless {
   };
 }
 
-function makeSub(overrides: Partial<Subscription> = {}): Subscription {
-  return {
-    id: overrides.id ?? "s1",
-    remarks: overrides.remarks ?? "Sub",
-    url: overrides.url ?? "https://example.com/sub",
-    enabled: overrides.enabled ?? true,
-    groupId: overrides.groupId ?? "g-main",
-    autoUpdate: overrides.autoUpdate ?? false,
-    interval: overrides.interval ?? 6,
-    allowInsecure: overrides.allowInsecure ?? false,
-    userAgent: overrides.userAgent ?? "",
-    filter: overrides.filter ?? "",
-    updateMode: overrides.updateMode ?? "auto",
-    lastUpdated: overrides.lastUpdated ?? "",
-    count: overrides.count ?? 0,
-    lastError: overrides.lastError ?? null,
-    prevProfile: overrides.prevProfile ?? null,
-    nextProfile: overrides.nextProfile ?? null,
-  };
-}
-
-function makeAsset(overrides: Partial<AssetFile> = {}): AssetFile {
-  return {
-    id: overrides.id ?? uid(),
-    remarks: overrides.remarks ?? "geoip.dat",
-    url: overrides.url ?? "https://example.com/geoip.dat",
-    lastUpdated: overrides.lastUpdated ?? Date.now(),
-    locked: overrides.locked ?? false,
-  };
-}
-
 function makeState(overrides: Partial<AppState> = {}): AppState {
   return {
     profiles: overrides.profiles ?? [],
@@ -106,9 +72,7 @@ function makeState(overrides: Partial<AppState> = {}): AppState {
       { id: "g-main", name: "Main" },
       { id: "g-alt", name: "Alt" },
     ],
-    subscriptions: overrides.subscriptions ?? [],
     routingRules: overrides.routingRules ?? [],
-    assetFiles: overrides.assetFiles ?? [],
     settings: overrides.settings ?? DEFAULT_SETTINGS,
     activeId: overrides.activeId ?? null,
     version: overrides.version,
@@ -147,18 +111,6 @@ function createBridgeMock(): BridgeMock {
     // Wired in beforeEach to run the real applyMutation against the live store
     // state (so tests validate the canonical mutation logic too).
     mutate: vi.fn(async (_intent) => makeState()),
-    fetchSubscription: vi.fn(
-      async (_url: string, _opts?: { userAgent?: string; allowInsecure?: boolean }) => [],
-    ),
-    applySubscription: vi.fn(async (_subId: string) => makeState()),
-    onSubApplied: vi.fn((_cb: (info: SubAppliedEvent) => void) => () => {}),
-    onAssetsUpdated: vi.fn((_cb: (info: AssetsUpdatedEvent) => void) => () => {}),
-    downloadAsset: vi.fn(
-      async (_filename: string, _url: string, _mode?: "auto" | "proxy" | "direct") => ({
-        ok: true,
-      }),
-    ),
-    listAssets: vi.fn(async () => []),
     resolveCores: vi.fn(async (profiles: Profile[]) =>
       profiles.map(() => ({ resolved: "xray" as const, forced: null })),
     ),
@@ -196,9 +148,7 @@ beforeEach(async () => {
     const prev: AppState = {
       profiles: s.profiles,
       groups: s.groups,
-      subscriptions: s.subscriptions,
       routingRules: s.routingRules,
-      assetFiles: s.assetFiles,
       settings: s.settings,
       activeId: s.activeId,
       version: s.version,
@@ -272,7 +222,6 @@ describe("useAppStore", () => {
     bridge.readState.mockResolvedValue(
       makeState({
         settings: { ...DEFAULT_SETTINGS, routingMode: "bypass-lan" as never },
-        assetFiles: [],
       }),
     );
 
@@ -289,30 +238,12 @@ describe("useAppStore", () => {
     );
   });
 
-  it("hydrate migrates legacy subscription interval from hours to minutes", async () => {
-    bridge.readState.mockResolvedValue(
-      makeState({ subscriptions: [makeSub({ id: "s1", interval: 6 })] }), // no version → legacy
-    );
-
-    await useAppStore.getState().hydrate();
-
-    expect(useAppStore.getState().subscriptions[0].interval).toBe(360);
-    const replaces = bridge.mutate.mock.calls
-      .map((c) => c[0])
-      .filter((i): i is Extract<typeof i, { kind: "replaceState" }> => i.kind === "replaceState");
-    const replace = replaces[replaces.length - 1];
-    expect(replace?.state.subscriptions[0].interval).toBe(360);
-    expect(replace?.state.version).toBeTruthy();
-  });
-
   it("hydrate leaves versioned state intact (no re-migration)", async () => {
-    bridge.readState.mockResolvedValue(
-      makeState({ subscriptions: [makeSub({ id: "s1", interval: 360 })], version: "v0.3.2" }),
-    );
+    bridge.readState.mockResolvedValue(makeState({ version: "v0.3.2" }));
 
     await useAppStore.getState().hydrate();
 
-    expect(useAppStore.getState().subscriptions[0].interval).toBe(360);
+    expect(useAppStore.getState().hydrated).toBe(true);
   });
 
   it("setActive flushes and restarts when service is running", async () => {
@@ -324,7 +255,6 @@ describe("useAppStore", () => {
     useAppStore.setState({
       profiles: [p1, p2],
       groups: [{ id: "g-main", name: "Main" }],
-      subscriptions: [],
       settings: DEFAULT_SETTINGS,
       activeId: p1.meta.id,
       service: { ...DEFAULT_STATUS, state: "connected", activeId: p1.meta.id },
@@ -392,7 +322,6 @@ describe("useAppStore", () => {
     useAppStore.setState({
       profiles: [profile],
       groups: [{ id: "g-main", name: "Main" }],
-      subscriptions: [],
       settings: DEFAULT_SETTINGS,
       activeId: profile.meta.id,
       service: DEFAULT_STATUS,
@@ -423,7 +352,6 @@ describe("useAppStore", () => {
     useAppStore.setState({
       profiles: [p1],
       groups: [],
-      subscriptions: [],
       settings: DEFAULT_SETTINGS,
       activeId: null,
     });
@@ -438,12 +366,11 @@ describe("useAppStore", () => {
     expect(useAppStore.getState().profiles[0].meta.remarks).toBe("Two updated");
   });
 
-  it("cloneProfile detaches the subscription link and leaves the copy untested", async () => {
+  it("cloneProfile clears the subId and leaves the copy untested", async () => {
     const src = makeVless({ meta: { id: "p1", remarks: "Node", subId: "s1" } });
     useAppStore.setState({
       profiles: [src],
       groups: [],
-      subscriptions: [],
       settings: DEFAULT_SETTINGS,
       activeId: null,
       testResults: { p1: { ping: 123, speed: 9_000 } },
@@ -464,7 +391,6 @@ describe("useAppStore", () => {
     useAppStore.setState({
       profiles: [p],
       groups: [],
-      subscriptions: [],
       settings: DEFAULT_SETTINGS,
       activeId: null,
       testResults: {},
@@ -528,7 +454,6 @@ describe("useAppStore", () => {
     useAppStore.setState({
       profiles: [active, other],
       groups: [{ id: "g-main", name: "Main" }],
-      subscriptions: [],
       settings: DEFAULT_SETTINGS,
       activeId: active.meta.id,
       service: { ...DEFAULT_STATUS, state: "connected", activeId: active.meta.id },
@@ -539,141 +464,6 @@ describe("useAppStore", () => {
     expect(bridge.stop).toHaveBeenCalled();
     expect(useAppStore.getState().activeId).toBeNull();
     expect(useAppStore.getState().profiles.map((p) => p.meta.id)).toEqual(["p2"]);
-  });
-
-  it("removeAssetFile removes the asset without touching routing settings", async () => {
-    const geoip = makeAsset({ id: "asset-geoip" });
-    useAppStore.setState({
-      profiles: [],
-      groups: [{ id: "g-main", name: "Main" }],
-      subscriptions: [],
-      assetFiles: [geoip],
-      settings: { ...DEFAULT_SETTINGS, routingMode: "rules" },
-      activeId: null,
-    });
-
-    await useAppStore.getState().removeAssetFile(geoip.id);
-
-    expect(useAppStore.getState().assetFiles).toEqual([]);
-    expect(useAppStore.getState().settings.routingMode).toBe("rules");
-  });
-
-  it("updateSub surfaces a soft error recorded by the backend", async () => {
-    const sub = makeSub({ id: "s1", remarks: "Broken", filter: "[" });
-    useAppStore.setState({
-      profiles: [],
-      groups: [{ id: "g-main", name: "Main" }],
-      subscriptions: [sub],
-      settings: DEFAULT_SETTINGS,
-      activeId: null,
-    });
-    bridge.applySubscription.mockResolvedValue(
-      makeState({ subscriptions: [{ ...sub, lastError: "invalid profile filter" }] }),
-    );
-
-    await useAppStore.getState().updateSub("s1");
-
-    expect(bridge.applySubscription).toHaveBeenCalledWith("s1");
-    expect(useAppStore.getState().subscriptions[0].lastError).toBe("invalid profile filter");
-  });
-
-  it("updateSub reflects the state the backend applied", async () => {
-    const sub = makeSub({ id: "s1", remarks: "Main sub", groupId: "g-alt" });
-    const newActive = makeVless({
-      meta: { id: "new-active", remarks: "Node A", subId: "s1", groupId: "g-alt" },
-    });
-    const newB = makeVless({
-      meta: { id: "new-b", remarks: "Node B", subId: "s1", groupId: "g-alt" },
-    });
-
-    useAppStore.setState({
-      profiles: [makeVless({ meta: { id: "old-active", subId: "s1" } })],
-      groups: [
-        { id: "g-main", name: "Main" },
-        { id: "g-alt", name: "Alt" },
-      ],
-      subscriptions: [sub],
-      settings: DEFAULT_SETTINGS,
-      activeId: "old-active",
-      service: DEFAULT_STATUS,
-    });
-    // The backend returns the post-apply state (it ran fetch + map + dedup + apply
-    // and already restarted the active data-path if needed).
-    bridge.applySubscription.mockResolvedValue(
-      makeState({
-        profiles: [newActive, newB],
-        subscriptions: [{ ...sub, count: 2, lastError: null }],
-        activeId: "new-active",
-      }),
-    );
-
-    await useAppStore.getState().updateSub("s1");
-
-    const state = useAppStore.getState();
-    expect(state.activeId).toBe("new-active");
-    expect(state.profiles.map((p) => p.meta.id)).toEqual(["new-active", "new-b"]);
-    expect(state.subscriptions[0].count).toBe(2);
-    expect(state.subscriptions[0].lastError).toBeNull();
-    // The backend owns the restart; the store never starts the core itself.
-    expect(bridge.start).not.toHaveBeenCalled();
-  });
-
-  it("daemon subApplied push reloads the persisted state", async () => {
-    let push: ((info: SubAppliedEvent) => void) | null = null;
-    bridge.onSubApplied.mockImplementation((cb) => {
-      push = cb;
-      return () => {};
-    });
-    await useAppStore.getState().hydrate();
-    expect(push).not.toBeNull();
-
-    // The daemon applied a subscription headlessly and rewrote the state files.
-    const sub = makeSub({ id: "s1", remarks: "Cached sub", count: 1 });
-    const fresh = makeVless({ meta: { id: "fresh", remarks: "Fresh", subId: "s1" } });
-    bridge.readState.mockResolvedValue(
-      makeState({ profiles: [fresh], subscriptions: [sub], activeId: "fresh" }),
-    );
-
-    (push as unknown as (info: SubAppliedEvent) => void)({
-      subId: "s1",
-      remarks: "Cached sub",
-      count: 1,
-    });
-    await vi.waitFor(() => {
-      expect(useAppStore.getState().profiles.map((p) => p.meta.id)).toEqual(["fresh"]);
-    });
-
-    const state = useAppStore.getState();
-    expect(state.activeId).toBe("fresh");
-    expect(state.subscriptions[0].count).toBe(1);
-    expect(state.recentActivity[0]?.icon).toBe("cloud_sync");
-  });
-
-  it("daemon assetsUpdated push reloads assets and reports the restart", async () => {
-    let push: ((info: AssetsUpdatedEvent) => void) | null = null;
-    bridge.onAssetsUpdated.mockImplementation((cb) => {
-      push = cb;
-      return () => {};
-    });
-    await useAppStore.getState().hydrate();
-    expect(push).not.toBeNull();
-
-    // The daemon refreshed the geo assets headlessly and stamped lastUpdated.
-    const asset = makeAsset({ id: "a1", remarks: "geoip.dat", lastUpdated: 1234 });
-    bridge.readState.mockResolvedValue(makeState({ assetFiles: [asset] }));
-
-    (push as unknown as (info: AssetsUpdatedEvent) => void)({
-      remarks: ["geoip.dat"],
-      restarted: true,
-    });
-    await vi.waitFor(() => {
-      expect(useAppStore.getState().assetFiles[0]?.lastUpdated).toBe(1234);
-    });
-
-    // Newest first: the unrequested restart, then the asset that caused it.
-    const feed = useAppStore.getState().recentActivity;
-    expect(feed[0].icon).toBe("autorenew");
-    expect(feed[1].text).toContain("geoip.dat");
   });
 
   describe("recentActivity", () => {
@@ -727,24 +517,6 @@ describe("useAppStore", () => {
       expect(feed).toHaveLength(1);
       expect(feed[0].icon).toBe("download");
       expect(feed[0].text).toMatch(/2/);
-    });
-
-    it("updateSub pushes subUpdated activity on success", async () => {
-      const sub = makeSub({ id: "s1", remarks: "MySub" });
-      bridge.readState.mockResolvedValue(makeState({ subscriptions: [sub] }));
-      bridge.applySubscription.mockResolvedValue(
-        makeState({
-          profiles: [makeVless({ meta: { id: "p1", subId: "s1" } })],
-          subscriptions: [{ ...sub, count: 1 }],
-        }),
-      );
-      await useAppStore.getState().hydrate();
-
-      await useAppStore.getState().updateSub("s1");
-
-      const feed = useAppStore.getState().recentActivity;
-      expect(feed[0].icon).toBe("cloud_sync");
-      expect(feed[0].text).toContain("MySub");
     });
 
     it("selectBest pushes bestSelected activity", async () => {
@@ -842,19 +614,6 @@ describe("useAppStore", () => {
       const feed = useAppStore.getState().recentActivity;
       expect(feed[0].icon).toBe("content_cut");
       expect(feed[0].text).toMatch(/1/);
-    });
-
-    it("downloadAsset pushes assetDownloaded activity on success", async () => {
-      const asset = makeAsset({ id: "a1", remarks: "geoip.dat" });
-      bridge.readState.mockResolvedValue(makeState({ assetFiles: [asset] }));
-      bridge.downloadAsset.mockResolvedValue({ ok: true });
-      await useAppStore.getState().hydrate();
-
-      await useAppStore.getState().downloadAsset("a1");
-
-      const feed = useAppStore.getState().recentActivity;
-      expect(feed[0].icon).toBe("file_download_done");
-      expect(feed[0].text).toContain("geoip.dat");
     });
 
     it("upsertProfile pushes profileSaved activity", async () => {

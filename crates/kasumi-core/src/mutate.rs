@@ -16,12 +16,10 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::dedup::deduplicate_profiles_scoped;
 use crate::profile::Profile;
 use crate::state::{
-    AdvancedSettings, AppState, AssetFile, BASE_GROUP_ID, RoutingRule, Subscription,
-};
-use crate::sub_apply::{
-    deduplicate_profiles_scoped, migrate_profiles_to_new_group, remove_profiles_by_sub_id,
+    AdvancedSettings, AppState, BASE_GROUP_ID, RoutingRule,
 };
 
 /// Merge vs replace, shared by list-import and backup-restore intents.
@@ -91,16 +89,6 @@ pub enum MutationIntent {
         to: u32,
     },
 
-    // ---- subscriptions ----
-    /// Add or replace a subscription (by `id`).
-    UpsertSub {
-        subscription: Box<Subscription>,
-    },
-    /// Remove a subscription and prune the profiles it still owns in its group.
-    RemoveSub {
-        id: String,
-    },
-
     // ---- routing rules ----
     /// Add or replace a routing rule (by `id`).
     UpsertRoutingRule {
@@ -117,15 +105,6 @@ pub enum MutationIntent {
     ImportRoutingRules {
         rules: Vec<RoutingRule>,
         mode: ImportMode,
-    },
-
-    // ---- asset files ----
-    /// Add or replace an asset entry (by `id`).
-    UpsertAssetFile {
-        asset: Box<AssetFile>,
-    },
-    RemoveAssetFile {
-        id: String,
     },
 
     // ---- settings / active ----
@@ -211,7 +190,6 @@ pub fn apply_mutation(state: &mut AppState, intent: &MutationIntent) {
             state.groups.push(crate::state::Group {
                 id: id.clone(),
                 name: name.clone(),
-                sub_id: None,
             });
         }
         MutationIntent::RenameGroup { id, name } => {
@@ -245,53 +223,6 @@ pub fn apply_mutation(state: &mut AppState, intent: &MutationIntent) {
             move_item_by_index(&mut state.groups, from, (*to as usize).max(pinned));
         }
 
-        MutationIntent::UpsertSub { subscription } => {
-            // A subscription drags its profiles with its group. The sub currently in
-            // state is still the old one here, so compare groups and move the
-            // profiles before replacing it — the intent owns its own migration.
-            //
-            // - `Some(old) → Some(new)`: profiles still in `old` follow; ones the
-            //   user dragged to a third group stay put.
-            // - `None → Some(new)`: first group assignment — pull *all* of the sub's
-            //   profiles in (no previous target to preserve).
-            if let Some(old_group) = state
-                .subscriptions
-                .iter()
-                .find(|s| s.id == subscription.id)
-                .map(|s| s.group_id.clone())
-            {
-                match (old_group, &subscription.group_id) {
-                    (Some(old_g), Some(new_g)) if old_g != *new_g => {
-                        migrate_profiles_to_new_group(
-                            &mut state.profiles,
-                            &subscription.id,
-                            &old_g,
-                            new_g,
-                        );
-                    }
-                    (None, Some(new_g)) => {
-                        for p in state.profiles.iter_mut() {
-                            if p.meta().sub_id.as_deref() == Some(subscription.id.as_str())
-                                && p.meta().group_id != *new_g
-                            {
-                                p.meta_mut().group_id = new_g.clone();
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-            upsert_by_id(&mut state.subscriptions, (**subscription).clone());
-        }
-        MutationIntent::RemoveSub { id } => {
-            let group = state
-                .subscriptions
-                .iter()
-                .find(|s| s.id == *id)
-                .and_then(|s| s.group_id.clone());
-            state.profiles = remove_profiles_by_sub_id(&state.profiles, id, group.as_deref());
-            state.subscriptions.retain(|s| s.id != *id);
-        }
 
         MutationIntent::UpsertRoutingRule { rule } => {
             upsert_by_id(&mut state.routing_rules, (**rule).clone());
@@ -306,13 +237,6 @@ pub fn apply_mutation(state: &mut AppState, intent: &MutationIntent) {
             ImportMode::Replace => state.routing_rules = rules.clone(),
             ImportMode::Merge => state.routing_rules.extend(rules.iter().cloned()),
         },
-
-        MutationIntent::UpsertAssetFile { asset } => {
-            upsert_by_id(&mut state.asset_files, (**asset).clone());
-        }
-        MutationIntent::RemoveAssetFile { id } => {
-            state.asset_files.retain(|a| a.id != *id);
-        }
 
         MutationIntent::SetSettings { settings } => {
             state.settings = (**settings).clone();
@@ -334,14 +258,8 @@ pub fn apply_mutation(state: &mut AppState, intent: &MutationIntent) {
                 state.profiles.extend(incoming.profiles.iter().cloned());
                 state.groups.extend(incoming.groups.iter().cloned());
                 state
-                    .subscriptions
-                    .extend(incoming.subscriptions.iter().cloned());
-                state
                     .routing_rules
                     .extend(incoming.routing_rules.iter().cloned());
-                state
-                    .asset_files
-                    .extend(incoming.asset_files.iter().cloned());
                 // Per-field override by the backup, matching the UI's prior merge.
                 state.settings = incoming.settings.clone();
             }
@@ -369,17 +287,7 @@ fn upsert_profile_front(profiles: &mut Vec<Profile>, profile: Profile) {
 trait HasId {
     fn entity_id(&self) -> &str;
 }
-impl HasId for Subscription {
-    fn entity_id(&self) -> &str {
-        &self.id
-    }
-}
 impl HasId for RoutingRule {
-    fn entity_id(&self) -> &str {
-        &self.id
-    }
-}
-impl HasId for AssetFile {
     fn entity_id(&self) -> &str {
         &self.id
     }
@@ -427,7 +335,6 @@ mod tests {
         s.groups.push(Group {
             id: "g2".into(),
             name: "Two".into(),
-            sub_id: None,
         });
         s
     }
@@ -583,7 +490,6 @@ mod tests {
             s.groups.push(Group {
                 id: format!("g{i}"),
                 name: (*name).into(),
-                sub_id: None,
             });
         }
         // groups: g-main, g0, g1, g2 → move g2 (idx 3) to front; clamps to idx 1.
@@ -595,59 +501,7 @@ mod tests {
         assert_eq!(s.groups[0].id, "g-main");
     }
 
-    #[test]
-    fn remove_sub_prunes_owned_profiles() {
-        let mut s = base();
-        s.subscriptions.push(Subscription {
-            id: "s1".into(),
-            remarks: "S".into(),
-            url: String::new(),
-            enabled: true,
-            group_id: Some("g-main".into()),
-            auto_update: false,
-            interval: 60,
-            allow_insecure: false,
-            user_agent: String::new(),
-            filter: String::new(),
-            update_mode: Default::default(),
-            last_updated: String::new(),
-            count: 0,
-            last_error: None,
-            prev_profile: None,
-            next_profile: None,
-        });
-        let mut owned = with_id("trojan://pw@a.com:443#A", "a", "g-main");
-        owned.meta_mut().sub_id = Some("s1".into());
-        // Dragged out of the sub's group → must survive the removal.
-        let mut moved = with_id("trojan://pw@b.com:443#B", "b", "g2");
-        moved.meta_mut().sub_id = Some("s1".into());
-        s.profiles = vec![owned, moved];
-        apply_mutation(&mut s, &MutationIntent::RemoveSub { id: "s1".into() });
-        assert!(s.subscriptions.is_empty());
-        let ids: Vec<&str> = s.profiles.iter().map(|p| p.meta().id.as_str()).collect();
-        assert_eq!(ids, vec!["b"]);
-    }
 
-    fn mksub(id: &str, group: Option<&str>) -> Subscription {
-        Subscription {
-            id: id.into(),
-            remarks: "S".into(),
-            url: String::new(),
-            enabled: true,
-            group_id: group.map(str::to_string),
-            auto_update: false,
-            interval: 60,
-            allow_insecure: false,
-            user_agent: String::new(),
-            filter: String::new(),
-            update_mode: Default::default(),
-            last_updated: String::new(),
-            count: 0,
-            last_error: None,
-            prev_profile: None,
-            next_profile: None,
-        }
-    }
 
     fn owned(uri: &str, id: &str, group: &str, sub: &str) -> Profile {
         let mut p = with_id(uri, id, group);
@@ -655,73 +509,8 @@ mod tests {
         p
     }
 
-    #[test]
-    fn upsert_sub_group_change_drags_profiles_preserving_manual_moves() {
-        let mut s = base(); // groups: g-main, g2
-        s.groups.push(crate::state::Group {
-            id: "g3".into(),
-            name: "Three".into(),
-            sub_id: None,
-        });
-        s.subscriptions = vec![mksub("s1", Some("g-main"))];
-        s.profiles = vec![
-            owned("trojan://pw@a.com:443#A", "a", "g-main", "s1"), // follows
-            owned("trojan://pw@b.com:443#B", "b", "g3", "s1"),     // dragged out → stays
-            owned("trojan://pw@c.com:443#C", "c", "g-main", "s2"), // other sub → untouched
-        ];
-        // Edit the sub: g-main → g2.
-        apply_mutation(
-            &mut s,
-            &MutationIntent::UpsertSub {
-                subscription: Box::new(mksub("s1", Some("g2"))),
-            },
-        );
-        let group_of = |id: &str| {
-            s.profiles
-                .iter()
-                .find(|p| p.meta().id == id)
-                .unwrap()
-                .meta()
-                .group_id
-                .clone()
-        };
-        assert_eq!(group_of("a"), "g2");
-        assert_eq!(group_of("b"), "g3");
-        assert_eq!(group_of("c"), "g-main");
-        assert_eq!(s.subscriptions[0].group_id.as_deref(), Some("g2"));
-    }
 
-    #[test]
-    fn upsert_sub_first_group_assignment_pulls_all_profiles() {
-        let mut s = base();
-        s.subscriptions = vec![mksub("s1", None)];
-        s.profiles = vec![
-            owned("trojan://pw@a.com:443#A", "a", "g-main", "s1"),
-            owned("trojan://pw@b.com:443#B", "b", "g2", "s1"),
-        ];
-        apply_mutation(
-            &mut s,
-            &MutationIntent::UpsertSub {
-                subscription: Box::new(mksub("s1", Some("g2"))),
-            },
-        );
-        assert!(s.profiles.iter().all(|p| p.meta().group_id == "g2"));
-    }
 
-    #[test]
-    fn upsert_new_sub_leaves_profiles_alone() {
-        let mut s = base();
-        s.profiles = vec![owned("trojan://pw@a.com:443#A", "a", "g-main", "s1")];
-        // s1 is new (not in state) → nothing to migrate from.
-        apply_mutation(
-            &mut s,
-            &MutationIntent::UpsertSub {
-                subscription: Box::new(mksub("s1", Some("g2"))),
-            },
-        );
-        assert_eq!(s.profiles[0].meta().group_id, "g-main");
-        assert_eq!(s.subscriptions.len(), 1);
-    }
 
     #[test]
     fn import_routing_rules_merge_and_replace() {
@@ -791,7 +580,6 @@ mod tests {
         incoming.groups.push(Group {
             id: "gx".into(),
             name: "X".into(),
-            sub_id: None,
         });
         apply_mutation(
             &mut s,
@@ -807,38 +595,6 @@ mod tests {
         assert_eq!(s.active_id.as_deref(), Some("ghost"));
     }
 
-    #[test]
-    fn import_backup_merge_concats_lists() {
-        let mut s = base();
-        s.subscriptions.clear();
-        let mut incoming = default_app_state();
-        incoming.subscriptions.push(Subscription {
-            id: "s9".into(),
-            remarks: "S".into(),
-            url: String::new(),
-            enabled: true,
-            group_id: None,
-            auto_update: false,
-            interval: 60,
-            allow_insecure: false,
-            user_agent: String::new(),
-            filter: String::new(),
-            update_mode: Default::default(),
-            last_updated: String::new(),
-            count: 0,
-            last_error: None,
-            prev_profile: None,
-            next_profile: None,
-        });
-        apply_mutation(
-            &mut s,
-            &MutationIntent::ImportBackup {
-                incoming: Box::new(incoming),
-                mode: ImportMode::Merge,
-            },
-        );
-        assert!(s.subscriptions.iter().any(|x| x.id == "s9"));
-    }
 
     #[test]
     fn replace_state_swaps_wholesale() {

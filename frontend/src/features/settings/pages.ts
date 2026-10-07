@@ -6,7 +6,6 @@ export const SETTINGS_PAGES = [
   { id: "routing", icon: "alt_route", titleKey: "settings.page.routing" },
   { id: "tun", icon: "memory", titleKey: "settings.tunEngine" },
   { id: "network", icon: "dns", titleKey: "settings.page.network" },
-  { id: "resources", icon: "folder_managed", titleKey: "settings.page.resources" },
   { id: "app", icon: "tune", titleKey: "settings.page.app" },
   { id: "about", icon: "info", titleKey: "settings.page.about" },
 ] as const satisfies readonly { id: string; icon: string; titleKey: DictKey }[];

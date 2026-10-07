@@ -692,16 +692,11 @@ fn build_dns(s: &AdvancedSettings) -> Value {
     let remote = split_list(s.remote_dns.as_deref().unwrap_or(""), &DEFAULT_REMOTE_DNS);
     let mut servers: Vec<Value> = remote.into_iter().map(Value::from).collect();
     if s.fake_dns {
-        servers.insert(
-            0,
-            json!({ "address": "fakeip", "domains": ["regexp:.+"], "expectIPs": ["geoip:!private"] }),
-        );
+        servers.insert(0, json!({ "address": "fakeip", "domains": ["regexp:.+"] }));
     }
-    let query_strategy = if s.ipv6_enabled.unwrap_or(false) {
-        "UseIP"
-    } else {
-        "UseIPv4"
-    };
+    // A+AAAA in parallel by default: modern clients (Happy Eyeballs) expect both
+    // answers promptly, and there is no reason to withhold AAAA on IPv4-only links.
+    let query_strategy = "UseIP";
     let mut m = json!({ "servers": servers, "queryStrategy": query_strategy });
     if let Some(hosts) = parse_hosts(s.dns_hosts.as_deref().unwrap_or("")) {
         m["hosts"] = hosts;

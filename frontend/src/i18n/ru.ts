@@ -2,7 +2,7 @@
 // i18n/ru.ts
 // Full Russian dictionary.
 // ============================================================
-import { plural, pluralPart, selectPart } from "./messages";
+import { plural, pluralPart } from "./messages";
 import type { MessageRuntime, MessageValue, Vars } from "./runtime";
 
 const ru = {
@@ -11,7 +11,6 @@ const ru = {
   // nav
   "nav.overview": "Обзор",
   "nav.profiles": "Профили",
-  "nav.subs": "Подписки",
   "nav.settings": "Настройки",
   // overview
   "overview.title": "Kasumi Proxy",
@@ -24,8 +23,6 @@ const ru = {
   "overview.noInternet": "Нет интернета",
   "overview.failed": "Ошибка",
   "overview.noActiveProfile": "Активный профиль не выбран",
-  "overview.needsAssets":
-    "Скачайте файлы геоданных перед использованием этого режима маршрутизации.",
   "overview.download": "Скачивание",
   "overview.upload": "Отдача",
   "overview.uptime": "Время работы",
@@ -42,10 +39,8 @@ const ru = {
   "tray.recent": "Недавние профили",
   "overview.profilesCounter": "Профили",
   "overview.groupsCounter": "Группы",
-  "overview.subsCounter": "Подписки",
   "overview.quickActions": "Быстрые действия",
   "overview.openProfiles": "Открыть профили",
-  "overview.updateAllSubs": "Обновить все подписки",
   "overview.pingAll": "Пинговать все",
   "overview.backupRestore": "Резервная копия и восстановление",
   "overview.recentActivity": "Недавняя активность",
@@ -59,7 +54,6 @@ const ru = {
     many: "Импортировано # профилей",
     other: "Импортировано # профиля",
   }),
-  "activity.subUpdated": "Подписка обновлена · {name}",
   "activity.pingComplete": plural("count", {
     one: "Пинг завершён · # профиль",
     few: "Пинг завершён · # профиля",
@@ -86,8 +80,6 @@ const ru = {
     many: "Удалено # дубликатов",
     other: "Удалено # дубликата",
   }),
-  "activity.assetDownloaded": "Ресурс обновлён · {name}",
-  "activity.assetRestart": "Соединение перезапущено для применения новых гео-данных",
   "activity.profileSaved": "Профиль сохранён · {remarks}",
   "time.now": "сейчас",
   "time.ago": "{n}{unit} назад",
@@ -276,86 +268,6 @@ const ru = {
   "editor.acceptProxyProtocol": "Принимать PROXY протокол",
   "editor.vmessGlobalPadding": "Глобальное заполнение",
   "editor.vmessAuthenticatedLength": "Аутентифицированная длина",
-  // subscriptions
-  "subs.title": "Подписки",
-  "subs.subtitle": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { active = 0, imported = 0 } = vars ?? {};
-    return `${pluralPart(Number(active), { one: "# активная", few: "# активные", many: "# активных", other: "# активной" }, runtime)} · ${pluralPart(Number(imported), { one: "# импортированный профиль", few: "# импортированных профиля", many: "# импортированных профилей", other: "# импортированного профиля" }, runtime)}`;
-  },
-  "subs.updateAll": "Обновить все",
-  "subs.add": "Добавить",
-  "subs.add.manual": "Добавить вручную",
-  "subs.add.manualSub": "Одна подписка с параметрами",
-  "subs.add.paste": "Вставить список",
-  "subs.add.pasteSub": "Несколько URL или JSON",
-  "subs.export": "Экспорт",
-  "subs.copyUrl": "Скопировать URL",
-  "subs.urlCopied": "URL скопирован",
-  "subs.exportHint":
-    "Скопируйте подписки в буфер обмена для резервной копии или переноса на другое устройство.",
-  "subs.exportUrls": "Скопировать URL",
-  "subs.exportJson": "Скопировать как JSON",
-  "subs.exportEmpty": "Нет подписок для экспорта",
-  "subs.import": "Импорт",
-  "subs.importLabel": "URL подписок или JSON",
-  "subs.importHint":
-    "Вставьте URL подписок (по одной на строку) или JSON, экспортированный с другого устройства.",
-  "subs.importBtn": "Импортировать",
-  "subs.importEmpty": "Нечего импортировать",
-  "subs.importInvalid": "Не удалось разобрать ввод",
-  "subs.imported": plural("count", {
-    one: "Импортирована # подписка",
-    few: "Импортированы # подписки",
-    many: "Импортировано # подписок",
-    other: "Импортировано # подписки",
-  }),
-  "subs.exportCopied": plural("count", {
-    one: "Скопирована # подписка",
-    few: "Скопированы # подписки",
-    many: "Скопировано # подписок",
-    other: "Скопировано # подписки",
-  }),
-  "subs.addBtn": "Добавить подписку",
-  "subs.infoText":
-    "Каждая подписка импортирует свои серверы в выбранную группу. При обновлении эти профили обновляются, по возможности сохраняя ваш активный выбор.",
-  "subs.autoLabel": "Авто · {interval}",
-  "subs.manualLabel": "Вручную",
-  "subs.insecureLabel": "Небезопасно",
-  "subs.errorLabel": "Ошибка",
-  "subs.updateBtn": "Обновить",
-  "subs.neverUpdated": "никогда",
-  "subs.updatedAt": "обновлено {date}",
-  "subs.profilesCount": plural("n", {
-    one: "# профиль",
-    few: "# профиля",
-    many: "# профилей",
-    other: "# профиля",
-  }),
-  "subs.confirmDel.title": "Удалить подписку?",
-  "subs.confirmDel.body": "Импортированные профили из этого источника тоже будут удалены.",
-  "subs.confirmDel.cancel": "Отмена",
-  "subs.confirmDel.delete": "Удалить",
-  "subs.edit.newTitle": "Добавить подписку",
-  "subs.edit.editTitle": "Редактировать подписку",
-  "subs.edit.save": "Сохранить",
-  "subs.edit.remarks": "Название",
-  "subs.edit.remarksPh": "Мой провайдер",
-  "subs.edit.url": "URL подписки",
-  "subs.edit.urlPh": "https://…",
-  "subs.edit.targetGroup": "Целевая группа",
-  "subs.edit.userAgent": "User-Agent",
-  "subs.edit.userAgentPh": "по умолчанию",
-  "subs.edit.filter": "Фильтр (regex)",
-  "subs.edit.filterPh": "(?i)premium",
-  "subs.autoUpdate": "Автообновление",
-  "subs.autoUpdateSub": "Обновлять по расписанию",
-  "subs.interval": "Интервал (чч:мм)",
-  "subs.edit.urlInsecureHint":
-    "Незашифрованное соединение (HTTP) — подписку могут подменить при передаче.",
-  "subs.edit.validationRemarks": "Название обязательно",
-  "subs.edit.validationUrl": "URL подписки обязателен",
-  "subs.edit.validationInterval": "Интервал должен быть больше 0",
-  "subs.edit.validationFilter": "Некорректный regex",
   // settings
   "settings.title": "Настройки",
   "settings.subtitle": "Маршрутизация и ядро",
@@ -364,7 +276,6 @@ const ru = {
   "settings.xrayVersion": "Версия Xray",
   "settings.tun": "TUN",
   "settings.profiles": "Профили",
-  "settings.subscriptions": "Подписки",
   "settings.activeProfile": "Активный профиль",
   "settings.activeSelected": "выбран",
   "settings.activeNone": "нет",
@@ -455,8 +366,6 @@ const ru = {
   "settings.dnsHosts": "Статические hosts",
   "settings.dnsHostsPh": "example.com=1.2.3.4\ndomain.net=5.6.7.8",
   "settings.dnsHostsHint": "Один host=ip на строку или сырой JSON-объект",
-  "settings.ipv6": "Включить IPv6",
-  "settings.ipv6Sub": "Разрешать и маршрутизировать IPv6-адреса",
   "settings.socksAuth": "Аутентификация SOCKS",
   "settings.socksUser": "Имя пользователя",
   "settings.socksPass": "Пароль",
@@ -516,11 +425,11 @@ const ru = {
   "backup.merge": "Объединить",
   "backup.replace": "Заменить",
   "backup.summary": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { groups = 0, subscriptions = 0 } = vars ?? {};
-    return `${pluralPart(Number(groups), { one: "# группа", few: "# группы", many: "# групп", other: "# группы" }, runtime)} · ${pluralPart(Number(subscriptions), { one: "# подписка", few: "# подписки", many: "# подписок", other: "# подписки" }, runtime)}`;
+    const { groups = 0 } = vars ?? {};
+    return `${pluralPart(Number(groups), { one: "# группа", few: "# группы", many: "# групп", other: "# группы" }, runtime)}`;
   },
   "backup.mergeHint":
-    "Режим объединения добавляет импортированные профили/группы/подписки и накладывает настройки. Режим замены полностью перезаписывает текущее каноническое состояние.",
+    "Режим объединения добавляет импортированные профили/группы и накладывает настройки. Режим замены полностью перезаписывает текущее каноническое состояние.",
   "backup.invalidJson": "Некорректный JSON",
   "backup.invalidStructure": "Некорректная структура резервной копии",
   "backup.copied": "Резервная копия скопирована",
@@ -535,7 +444,6 @@ const ru = {
   "common.mode.auto": "Авто (сначала через прокси, затем напрямую)",
   "common.mode.proxy": "Только через прокси",
   "common.mode.direct": "Только напрямую",
-  "common.proxyNotRunning": "Перед режимом «Только через прокси» сначала запустите прокси.",
   "common.openFile": "Открыть файл…",
   // qr
   "qr.scan.title": "Сканировать QR-код",
@@ -611,14 +519,6 @@ const ru = {
   "profiles.row.select": "Выбрать",
   "profiles.row.edit": "Изменить",
   "profiles.row.more": "Ещё",
-  // subscriptions extra
-  "subs.added": "Подписка добавлена",
-  "subs.saved": "Подписка сохранена",
-  "subs.deleted": "Подписка удалена",
-  "subs.confirmDel.prefix": "Удалить",
-  "subs.toggleUrl": "Показать/скрыть URL",
-  "subs.editAction": "Изменить",
-  "subs.deleteAction": "Удалить",
   // routing rule sheet
   "routingSheet.newTitle": "Новое правило маршрутизации",
   "routingSheet.editTitle": "Редактировать правило маршрутизации",
@@ -655,14 +555,6 @@ const ru = {
     "Адреса или CIDR устройств, которые пользуются общим портом прокси.",
   "routingSheet.delete": "Удалить",
   // asset file sheet
-  "assetSheet.addTitle": "Добавить файл ресурсов",
-  "assetSheet.editTitle": "Редактировать файл ресурсов",
-  "assetSheet.save": "Сохранить",
-  "assetSheet.filename": "Имя файла",
-  "assetSheet.filenamePh": "geoip.dat",
-  "assetSheet.url": "URL",
-  "assetSheet.urlPh": "https://github.com/.../download/geoip.dat",
-  "assetSheet.delete": "Удалить",
   // settings extra
   "settings.routingRulesEditor": "Редактор правил",
   "settings.routingRulesHint":
@@ -682,7 +574,6 @@ const ru = {
   "settings.page.routing": "Маршрутизация",
   "settings.page.network": "DNS и соединение",
   "settings.page.networkSub": "DNS, mux, фрагментация, локальные порты",
-  "settings.page.resources": "Файлы ресурсов",
   "settings.page.app": "Приложение",
   "settings.page.appSub": "автозапуск, журналы, резервная копия",
   "settings.page.about": "О программе",
@@ -692,12 +583,6 @@ const ru = {
     few: "# правила",
     many: "# правил",
     other: "# правила",
-  }),
-  "settings.assetCount": plural("count", {
-    one: "# файл",
-    few: "# файла",
-    many: "# файлов",
-    other: "# файла",
   }),
   "settings.routingCatchAll":
     "Перехватывает весь трафик — правила ниже и автопроверка по IP не сработают.",
@@ -722,32 +607,6 @@ const ru = {
   "settings.routingRuleNoMatch": "Нет полей для сопоставления",
   "settings.routingReorder": "Переместить правило",
   "settings.routingRulesTitle": "Правила",
-  "settings.assetFiles": "Файлы ресурсов",
-  "settings.assetHint": "Это Xray geo-базы.",
-  "settings.assetUpdateAll": "Обновить все",
-  "settings.assetAdd": "Добавить файл",
-  "settings.assetAutoUpdate": "Автообновление",
-  "settings.assetAutoUpdateSub": "Обновлять geosite/geoip по расписанию",
-  "settings.assetUpdateInterval": "Интервал обновления",
-  "settings.assetAutoUpdateWarning":
-    "При изменении гео-данных активное соединение ненадолго перезапустится, чтобы применить их.",
-  "settings.assetIntervalHours": plural("count", {
-    one: "Каждый # час",
-    few: "Каждые # часа",
-    many: "Каждые # часов",
-    other: "Каждые # часа",
-  }),
-  "settings.assetIntervalDays": plural("count", {
-    one: "Каждый # день",
-    few: "Каждые # дня",
-    many: "Каждые # дней",
-    other: "Каждые # дня",
-  }),
-  "settings.assetDownload": "Скачать",
-  "settings.assetDelete": "Удалить",
-  "settings.assetLinks": "Готовые ссылки для geoip.dat / geosite.dat",
-  "settings.assetUse": "Использовать",
-  "settings.assetNotDownloaded": "Ещё не скачано",
   "settings.protocol.vless": "VLESS",
   "settings.protocol.vmess": "VMess",
   "settings.protocol.trojan": "Trojan",
@@ -821,8 +680,6 @@ const ru = {
     "Сервис остановлен, потому что активный профиль был удалён",
   "store.service.stoppedProfileDeleted":
     "Сервис остановлен, потому что активный профиль был удалён",
-  "store.service.stoppedSubRemoved":
-    "Сервис остановлен, потому что подписка активного профиля была удалена",
   "store.service.stoppedBeforeBackupRestore":
     "Сервис остановлен перед восстановлением резервной копии",
   "store.profile.copySuffix": "копия",
@@ -851,24 +708,6 @@ const ru = {
     other: "Удалено # дубликата",
   }),
   "store.dedup.none": "Дубликатов не найдено",
-  "store.sub.updateFailed": "Не удалось обновить: {name}",
-  "store.sub.updating": "Обновление {name}…",
-  "store.sub.updatedProfiles": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { count = 0, name = "" } = vars ?? {};
-    return `${name}: ${pluralPart(Number(count), { one: "# профиль", few: "# профиля", many: "# профилей", other: "# профиля" }, runtime)}`;
-  },
-  "store.asset.downloadFailed": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `Ошибка загрузки (${selectPart(String(mode), { auto: "авто", proxy: "через прокси", direct: "напрямую", other: "{value}" }, runtime)}): ${name}`;
-  },
-  "store.asset.downloadFailedReason": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "", reason = "" } = vars ?? {};
-    return `Ошибка загрузки (${selectPart(String(mode), { auto: "авто", proxy: "через прокси", direct: "напрямую", other: "{value}" }, runtime)}): ${name} · ${reason}`;
-  },
-  "store.asset.updated": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `Обновлён ${name} (${selectPart(String(mode), { auto: "авто", proxy: "через прокси", direct: "напрямую", other: "{value}" }, runtime)})`;
-  },
   "store.backup.invalidJson": "Некорректный JSON резервной копии",
   "store.backup.invalidStructure": "Некорректная структура резервной копии",
   "store.backup.restored": "Резервная копия восстановлена",

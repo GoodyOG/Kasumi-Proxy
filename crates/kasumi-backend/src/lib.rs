@@ -7,7 +7,6 @@
 //! it. Desktop wraps these as Tauri commands; the Android module's daemon exposes
 //! them over a token-gated WS. Both call the same code; there is no control socket.
 
-pub mod asset_update;
 pub mod commands;
 pub mod fs;
 pub mod fsjson;
@@ -19,7 +18,6 @@ pub mod proc;
 pub mod service;
 pub mod state;
 pub mod state_mw;
-pub mod sub_update;
 pub mod updater;
 
 #[cfg(test)]

@@ -45,9 +45,7 @@ export const commands = {
 
 /** Events */
 export const events = {
-	assetsUpdated: makeEvent<AssetsUpdated>("assets-updated"),
 	statusChanged: makeEvent<StatusChanged_Deserialize>("status-changed"),
-	subscriptionApplied: makeEvent<SubscriptionApplied>("subscription-applied"),
 	trayAction: makeEvent<TrayAction>("tray-action"),
 };
 
@@ -326,9 +324,7 @@ export type AppState = AppState_Serialize | AppState_Deserialize;
 export type AppState_Deserialize = {
 	profiles?: Profile[],
 	groups: Group_Deserialize[],
-	subscriptions: Subscription_Deserialize[],
 	routingRules?: RoutingRule_Deserialize[],
-	assetFiles?: AssetFile[],
 	settings: AdvancedSettings_Deserialize,
 	/**  Active profile id, or `null` (required + nullable). */
 	activeId: string | null,
@@ -345,9 +341,7 @@ export type AppState_Deserialize = {
 export type AppState_Serialize = {
 	profiles: Profile[],
 	groups: Group_Serialize[],
-	subscriptions: Subscription_Serialize[],
 	routingRules: RoutingRule_Serialize[],
-	assetFiles: AssetFile[],
 	settings: AdvancedSettings_Serialize,
 	/**  Active profile id, or `null` (required + nullable). */
 	activeId: string | null,
@@ -360,31 +354,12 @@ export type AppState_Serialize = {
 	schemaVersion: number,
 };
 
-/**  A downloadable asset (geoip/geosite) the daemon keeps current (`AssetFileSchema`). */
-export type AssetFile = {
-	id: string,
-	remarks: string,
-	url: string,
-	/**  Epoch-ms of last refresh, or `null` if never fetched (required + nullable). */
-	lastUpdated: number | null,
-	locked: boolean,
-};
 
 /**
  *  Geo assets the headless updater refreshed; the UI reloads state so the asset
  *  rows show their new timestamps.
  */
-export type AssetsUpdated = AssetsUpdatedEvent;
 
-/**
- *  Daemon push: it refreshed geo assets headlessly. `restarted` says whether the
- *  active core was bounced to pick the new data up, so the UI can explain a
- *  connection blip it didn't ask for.
- */
-export type AssetsUpdatedEvent = {
-	remarks: string[],
-	restarted: boolean,
-};
 
 /**  Reply to the `capabilities` RPC. */
 export type Capabilities = {
@@ -511,14 +486,12 @@ export type Group = Group_Serialize | Group_Deserialize;
 export type Group_Deserialize = {
 	id: string,
 	name: string,
-	subId?: string | null,
 };
 
 /**  A profile group (`GroupSchema`). */
 export type Group_Serialize = {
 	id: string,
 	name: string,
-	subId?: string | null,
 };
 
 /**  gRPC transport. */
@@ -644,16 +617,14 @@ export type MutationIntent_Deserialize =
 ({ kind: "deduplicateProfiles"; activeId?: string | null; groupId?: string | null }) & { asset?: never; from?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "addGroup"; id: string; name: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "renameGroup"; id: string; name: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "removeGroup"; id: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | 
 /**  Reorder by index; `g-main` stays pinned at 0. */
 ({ kind: "reorderGroups"; from: number; to: number }) & { activeId?: never; asset?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never } | 
-/**  Add or replace a subscription (by `id`). */
-({ kind: "upsertSub"; subscription: Subscription_Deserialize }) & { activeId?: never; asset?: never; from?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; to?: never } | 
-/**  Remove a subscription and prune the profiles it still owns in its group. */
-({ kind: "removeSub"; id: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | 
+
+
 /**  Add or replace a routing rule (by `id`). */
 ({ kind: "upsertRoutingRule"; rule: RoutingRule_Deserialize }) & { activeId?: never; asset?: never; from?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "removeRoutingRule"; id: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "reorderRoutingRules"; from: number; to: number }) & { activeId?: never; asset?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never } | 
 /**  Append (merge) or replace the routing-rule list with `rules`. */
 ({ kind: "importRoutingRules"; rules: RoutingRule_Deserialize[]; mode: ImportMode }) & { activeId?: never; asset?: never; from?: never; groupId?: never; id?: never; ids?: never; incoming?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; settings?: never; state?: never; subscription?: never; to?: never } | 
 /**  Add or replace an asset entry (by `id`). */
-({ kind: "upsertAssetFile"; asset: AssetFile }) & { activeId?: never; from?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "removeAssetFile"; id: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | 
+
 /**  Replace the whole settings block (the UI builds the next one from the prev). */
 ({ kind: "setSettings"; settings: AdvancedSettings_Deserialize }) & { activeId?: never; asset?: never; from?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; state?: never; subscription?: never; to?: never } | 
 /**  Set (or clear) the active profile id. */
@@ -691,16 +662,14 @@ export type MutationIntent_Serialize =
 ({ kind: "deduplicateProfiles"; activeId: string | null; groupId: string | null }) & { asset?: never; from?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "addGroup"; id: string; name: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "renameGroup"; id: string; name: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "removeGroup"; id: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | 
 /**  Reorder by index; `g-main` stays pinned at 0. */
 ({ kind: "reorderGroups"; from: number; to: number }) & { activeId?: never; asset?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never } | 
-/**  Add or replace a subscription (by `id`). */
-({ kind: "upsertSub"; subscription: Subscription_Serialize }) & { activeId?: never; asset?: never; from?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; to?: never } | 
-/**  Remove a subscription and prune the profiles it still owns in its group. */
-({ kind: "removeSub"; id: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | 
+
+
 /**  Add or replace a routing rule (by `id`). */
 ({ kind: "upsertRoutingRule"; rule: RoutingRule_Serialize }) & { activeId?: never; asset?: never; from?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "removeRoutingRule"; id: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "reorderRoutingRules"; from: number; to: number }) & { activeId?: never; asset?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never } | 
 /**  Append (merge) or replace the routing-rule list with `rules`. */
 ({ kind: "importRoutingRules"; rules: RoutingRule_Serialize[]; mode: ImportMode }) & { activeId?: never; asset?: never; from?: never; groupId?: never; id?: never; ids?: never; incoming?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; settings?: never; state?: never; subscription?: never; to?: never } | 
 /**  Add or replace an asset entry (by `id`). */
-({ kind: "upsertAssetFile"; asset: AssetFile }) & { activeId?: never; from?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | ({ kind: "removeAssetFile"; id: string }) & { activeId?: never; asset?: never; from?: never; groupId?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; settings?: never; state?: never; subscription?: never; to?: never } | 
+
 /**  Replace the whole settings block (the UI builds the next one from the prev). */
 ({ kind: "setSettings"; settings: AdvancedSettings_Serialize }) & { activeId?: never; asset?: never; from?: never; groupId?: never; id?: never; ids?: never; incoming?: never; mode?: never; name?: never; newId?: never; profile?: never; profiles?: never; remarks?: never; rule?: never; rules?: never; state?: never; subscription?: never; to?: never } | 
 /**  Set (or clear) the active profile id. */
@@ -987,58 +956,10 @@ export type StatusChanged_Deserialize = ServiceStatus_Deserialize;
 /**  Live service status pushed to the UI (the 1 Hz + on-change stream). */
 export type StatusChanged_Serialize = ServiceStatus_Serialize;
 
-/**  Daemon push: it fetched & applied a subscription headlessly. */
-export type SubAppliedEvent = {
-	subId: string,
-	remarks: string,
-	count: number,
-};
 
 /**  A subscription source (`SubscriptionSchema`). */
-export type Subscription = Subscription_Serialize | Subscription_Deserialize;
-
-/**  A subscription the headless updater fetched and applied; the UI reloads state. */
-export type SubscriptionApplied = SubAppliedEvent;
 
 /**  A subscription source (`SubscriptionSchema`). */
-export type Subscription_Deserialize = {
-	id: string,
-	remarks: string,
-	url: string,
-	enabled: boolean,
-	groupId?: string | null,
-	autoUpdate: boolean,
-	interval: number,
-	allowInsecure: boolean,
-	userAgent: string,
-	filter: string,
-	updateMode?: FetchMode,
-	lastUpdated: string,
-	count: number,
-	lastError?: string | null,
-	prevProfile?: string | null,
-	nextProfile?: string | null,
-};
-
-/**  A subscription source (`SubscriptionSchema`). */
-export type Subscription_Serialize = {
-	id: string,
-	remarks: string,
-	url: string,
-	enabled: boolean,
-	groupId?: string | null,
-	autoUpdate: boolean,
-	interval: number,
-	allowInsecure: boolean,
-	userAgent: string,
-	filter: string,
-	updateMode: FetchMode,
-	lastUpdated: string,
-	count: number,
-	lastError?: string | null,
-	prevProfile?: string | null,
-	nextProfile?: string | null,
-};
 
 /**  Plain TCP, optionally wearing the HTTP fake-header obfuscation. */
 export type TcpTransport = {

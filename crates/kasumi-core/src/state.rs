@@ -39,7 +39,9 @@ pub const DEFAULT_DELAY_TEST_URL: &str = "https://www.gstatic.com/generate_204";
 pub const DEFAULT_SPEED_TEST_URL: &str = "http://speed.cloudflare.com/__down?bytes=10000000";
 
 // Default upstream resolvers when remoteDns is unset (xray uses the list).
-pub const DEFAULT_REMOTE_DNS: [&str; 2] = ["1.1.1.1", "8.8.8.8"];
+// TCP (not UDP): a lost UDP datagram stalls DNS for xray's full timeout,
+// while TCP retransmits in ~200ms — much smoother on lossy mobile links.
+pub const DEFAULT_REMOTE_DNS: [&str; 2] = ["tcp://1.1.1.1", "tcp://8.8.8.8"];
 // fake-IP v4 range for the fakeDns feature, shared by both engines.
 pub const FAKEIP_INET4_RANGE: &str = "198.18.0.0/15";
 // Default log-rotation cap (KB).
@@ -62,35 +64,6 @@ pub const BASE_GROUP_NAME: &str = "Main";
 pub struct Group {
     pub id: String,
     pub name: String,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub sub_id: Option<String>,
-}
-
-/// A subscription source (`SubscriptionSchema`).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
-pub struct Subscription {
-    pub id: String,
-    pub remarks: String,
-    pub url: String,
-    pub enabled: bool,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub group_id: Option<String>,
-    pub auto_update: bool,
-    pub interval: i64,
-    pub allow_insecure: bool,
-    pub user_agent: String,
-    pub filter: String,
-    #[serde(default)]
-    pub update_mode: FetchMode,
-    pub last_updated: String,
-    pub count: i64,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub last_error: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub prev_profile: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub next_profile: Option<String>,
 }
 
 /// Transport scope of a routing rule.
@@ -133,18 +106,6 @@ pub struct RoutingRule {
     /// Source addresses/CIDRs, e.g. LAN clients using the shared proxy port.
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub source_ip: Option<Vec<String>>,
-}
-
-/// A downloadable asset (geoip/geosite) the daemon keeps current (`AssetFileSchema`).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, specta::Type)]
-#[serde(rename_all = "camelCase")]
-pub struct AssetFile {
-    pub id: String,
-    pub remarks: String,
-    pub url: String,
-    /// Epoch-ms of last refresh, or `null` if never fetched (required + nullable).
-    pub last_updated: Option<i64>,
-    pub locked: bool,
 }
 
 // ---- AdvancedSettings enums ----
@@ -347,7 +308,7 @@ impl Default for AdvancedSettings {
             domain_sniffing: true,
             route_only: false,
             domain_strategy: DomainStrategy::IpIfNonMatch,
-            strict_route: false,
+            strict_route: true,
             dns_via_proxy: true,
             fake_dns: false,
             prefer_ipv6: false,
@@ -406,11 +367,8 @@ pub struct AppState {
     #[serde(default)]
     pub profiles: Vec<Profile>,
     pub groups: Vec<Group>,
-    pub subscriptions: Vec<Subscription>,
     #[serde(default)]
     pub routing_rules: Vec<RoutingRule>,
-    #[serde(default)]
-    pub asset_files: Vec<AssetFile>,
     pub settings: AdvancedSettings,
     /// Active profile id, or `null` (required + nullable).
     pub active_id: Option<String>,
@@ -432,11 +390,8 @@ pub fn default_app_state() -> AppState {
         groups: vec![Group {
             id: BASE_GROUP_ID.into(),
             name: BASE_GROUP_NAME.into(),
-            sub_id: None,
         }],
-        subscriptions: Vec::new(),
         routing_rules: Vec::new(),
-        asset_files: Vec::new(),
         settings: AdvancedSettings::default(),
         active_id: None,
         version: None,
@@ -462,13 +417,6 @@ mod tests {
     use super::*;
 
     #[test]
-    fn group_omits_optional_sub_id() {
-        let g: Group = serde_json::from_str(r#"{"id":"g-main","name":"Main"}"#).unwrap();
-        assert_eq!(g.sub_id, None);
-        assert!(serde_json::to_value(&g).unwrap().get("subId").is_none());
-    }
-
-    #[test]
     fn force_socks_port_steps_past_a_colliding_http_port() {
         // Default layout: socks, http = socks + 1 → force = socks + 2, no collision.
         assert_eq!(force_socks_port(10808, 10809), 10810);
@@ -478,32 +426,13 @@ mod tests {
         assert_eq!(force_socks_port(10808, 10811), 10810);
     }
 
-    #[test]
-    fn subscription_update_mode_default_and_camel() {
-        let s: Subscription = serde_json::from_str(
-            r#"{"id":"s","remarks":"r","url":"u","enabled":true,"autoUpdate":false,
-                "interval":60,"allowInsecure":false,"userAgent":"","filter":"",
-                "lastUpdated":"","count":0}"#,
-        )
-        .unwrap();
-        assert_eq!(s.update_mode, FetchMode::Auto);
-        assert_eq!(s.last_error, None);
-        let v = serde_json::to_value(&s).unwrap();
-        assert_eq!(v["updateMode"], "auto");
-        assert!(v.get("lastError").is_none());
-    }
 
     #[test]
-    fn rule_network_and_asset_null() {
+    fn rule_network_serializes() {
         assert_eq!(
             serde_json::to_string(&RuleNetwork::TcpUdp).unwrap(),
             "\"tcp,udp\""
         );
-        let a: AssetFile = serde_json::from_str(
-            r#"{"id":"geoip","remarks":"GeoIP","url":"u","lastUpdated":null,"locked":true}"#,
-        )
-        .unwrap();
-        assert!(serde_json::to_value(&a).unwrap()["lastUpdated"].is_null());
     }
 
     #[test]

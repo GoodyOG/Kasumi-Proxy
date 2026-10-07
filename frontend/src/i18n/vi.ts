@@ -2,7 +2,7 @@
 // i18n/vi.ts
 // Full Vietnamese dictionary.
 // ============================================================
-import { plural, pluralPart, selectPart } from "./messages";
+import { plural, pluralPart } from "./messages";
 import type { MessageRuntime, MessageValue, Vars } from "./runtime";
 
 const vi = {
@@ -11,7 +11,6 @@ const vi = {
   // nav
   "nav.overview": "Tổng quan",
   "nav.profiles": "Hồ sơ",
-  "nav.subs": "Đăng ký",
   "nav.settings": "Cài đặt",
   // overview
   "overview.title": "Kasumi Proxy",
@@ -24,8 +23,6 @@ const vi = {
   "overview.noInternet": "Không có internet",
   "overview.failed": "Lỗi",
   "overview.noActiveProfile": "Chưa chọn hồ sơ đang hoạt động",
-  "overview.needsAssets":
-    "Tải xuống các tệp tài nguyên địa lý trước khi sử dụng chế độ định tuyến này.",
   "overview.download": "Tải xuống",
   "overview.upload": "Tải lên",
   "overview.uptime": "Thời gian hoạt động",
@@ -42,10 +39,8 @@ const vi = {
   "tray.recent": "Hồ sơ gần đây",
   "overview.profilesCounter": "Hồ sơ",
   "overview.groupsCounter": "Nhóm",
-  "overview.subsCounter": "Đăng ký",
   "overview.quickActions": "Thao tác nhanh",
   "overview.openProfiles": "Mở hồ sơ",
-  "overview.updateAllSubs": "Cập nhật mọi đăng ký",
   "overview.pingAll": "Ping tất cả",
   "overview.backupRestore": "Sao lưu và khôi phục",
   "overview.recentActivity": "Hoạt động gần đây",
@@ -54,7 +49,6 @@ const vi = {
   "activity.serviceRestarted": "Dịch vụ đã khởi động lại · {remarks}",
   "activity.profileSwitched": "Đã chuyển sang {remarks}",
   "activity.profileImported": plural("count", { one: "Đã nhập # hồ sơ", other: "Đã nhập # hồ sơ" }),
-  "activity.subUpdated": "Đã cập nhật đăng ký · {name}",
   "activity.pingComplete": plural("count", {
     one: "Ping hoàn tất · # hồ sơ",
     other: "Ping hoàn tất · # hồ sơ",
@@ -73,8 +67,6 @@ const vi = {
     one: "Đã xóa # bản trùng",
     other: "Đã xóa # bản trùng",
   }),
-  "activity.assetDownloaded": "Đã cập nhật tài nguyên · {name}",
-  "activity.assetRestart": "Đã khởi động lại kết nối để áp dụng dữ liệu geo mới",
   "activity.profileSaved": "Đã lưu hồ sơ · {remarks}",
   "time.now": "vừa xong",
   "time.ago": "{n}{unit} trước",
@@ -263,76 +255,6 @@ const vi = {
   "editor.acceptProxyProtocol": "Chấp nhận PROXY protocol",
   "editor.vmessGlobalPadding": "Đệm toàn cục",
   "editor.vmessAuthenticatedLength": "Độ dài xác thực",
-  // subscriptions
-  "subs.title": "Đăng ký",
-  "subs.subtitle": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { active = 0, imported = 0 } = vars ?? {};
-    return `${pluralPart(Number(active), { one: "# đăng ký đang bật", other: "# đăng ký đang bật" }, runtime)} · ${pluralPart(Number(imported), { one: "# hồ sơ đã nhập", other: "# hồ sơ đã nhập" }, runtime)}`;
-  },
-  "subs.updateAll": "Cập nhật tất cả",
-  "subs.add": "Thêm",
-  "subs.add.manual": "Thêm thủ công",
-  "subs.add.manualSub": "Một đăng ký với tùy chọn",
-  "subs.add.paste": "Dán danh sách",
-  "subs.add.pasteSub": "Nhiều URL hoặc JSON đã xuất",
-  "subs.export": "Xuất",
-  "subs.copyUrl": "Sao chép URL",
-  "subs.urlCopied": "Đã sao chép URL",
-  "subs.exportHint":
-    "Sao chép các đăng ký của bạn vào bộ nhớ tạm để sao lưu hoặc chuyển sang thiết bị khác.",
-  "subs.exportUrls": "Sao chép URL",
-  "subs.exportJson": "Sao chép dạng JSON",
-  "subs.exportEmpty": "Không có đăng ký để xuất",
-  "subs.import": "Nhập",
-  "subs.importLabel": "URL đăng ký hoặc JSON",
-  "subs.importHint":
-    "Dán các URL đăng ký (mỗi dòng một URL) hoặc tệp JSON đã xuất từ thiết bị khác.",
-  "subs.importBtn": "Nhập",
-  "subs.importEmpty": "Không có gì để nhập",
-  "subs.importInvalid": "Không thể phân tích dữ liệu nhập",
-  "subs.imported": plural("count", {
-    one: "Đã nhập # đăng ký",
-    other: "Đã nhập # đăng ký",
-  }),
-  "subs.exportCopied": plural("count", {
-    one: "Đã sao chép # đăng ký",
-    other: "Đã sao chép # đăng ký",
-  }),
-  "subs.addBtn": "Thêm đăng ký",
-  "subs.infoText":
-    "Mỗi đăng ký sẽ nhập các máy chủ của nó vào một nhóm đã chọn. Khi cập nhật, các hồ sơ đó sẽ được làm mới và cố gắng giữ nguyên lựa chọn đang hoạt động của bạn.",
-  "subs.autoLabel": "Tự động · {interval}",
-  "subs.manualLabel": "Thủ công",
-  "subs.insecureLabel": "Không an toàn",
-  "subs.errorLabel": "Lỗi",
-  "subs.updateBtn": "Cập nhật",
-  "subs.neverUpdated": "chưa từng",
-  "subs.updatedAt": "đã cập nhật {date}",
-  "subs.profilesCount": plural("n", { one: "# hồ sơ", other: "# hồ sơ" }),
-  "subs.confirmDel.title": "Xóa đăng ký?",
-  "subs.confirmDel.body": "Các hồ sơ được nhập từ nguồn này cũng sẽ bị xóa.",
-  "subs.confirmDel.cancel": "Hủy",
-  "subs.confirmDel.delete": "Xóa",
-  "subs.edit.newTitle": "Thêm đăng ký",
-  "subs.edit.editTitle": "Chỉnh sửa đăng ký",
-  "subs.edit.save": "Lưu",
-  "subs.edit.remarks": "Ghi chú",
-  "subs.edit.remarksPh": "Nhà cung cấp của tôi",
-  "subs.edit.url": "URL đăng ký",
-  "subs.edit.urlPh": "https://…",
-  "subs.edit.targetGroup": "Nhóm đích",
-  "subs.edit.userAgent": "User-Agent",
-  "subs.edit.userAgentPh": "mặc định",
-  "subs.edit.filter": "Bộ lọc (regex)",
-  "subs.edit.filterPh": "(?i)premium",
-  "subs.autoUpdate": "Tự động cập nhật",
-  "subs.autoUpdateSub": "Làm mới theo lịch",
-  "subs.interval": "Khoảng thời gian (hh:mm)",
-  "subs.edit.urlInsecureHint": "HTTP không mã hóa — đăng ký này có thể bị giả mạo khi truyền.",
-  "subs.edit.validationRemarks": "Bắt buộc nhập ghi chú",
-  "subs.edit.validationUrl": "Bắt buộc nhập URL đăng ký",
-  "subs.edit.validationInterval": "Khoảng thời gian phải lớn hơn 0",
-  "subs.edit.validationFilter": "Regex không hợp lệ",
   // settings
   "settings.title": "Cài đặt",
   "settings.subtitle": "Định tuyến và nhân lõi",
@@ -341,7 +263,6 @@ const vi = {
   "settings.xrayVersion": "Phiên bản Xray",
   "settings.tun": "TUN",
   "settings.profiles": "Hồ sơ",
-  "settings.subscriptions": "Đăng ký",
   "settings.activeProfile": "Hồ sơ đang hoạt động",
   "settings.activeSelected": "đã chọn",
   "settings.activeNone": "không có",
@@ -430,8 +351,6 @@ const vi = {
   "settings.dnsHosts": "Hosts tĩnh",
   "settings.dnsHostsPh": "example.com=1.2.3.4\ndomain.net=5.6.7.8",
   "settings.dnsHostsHint": "Mỗi dòng một host=ip hoặc một JSON object thô",
-  "settings.ipv6": "Bật IPv6",
-  "settings.ipv6Sub": "Phân giải và định tuyến địa chỉ IPv6",
   "settings.socksAuth": "Xác thực SOCKS",
   "settings.socksUser": "Tên người dùng",
   "settings.socksPass": "Mật khẩu",
@@ -491,11 +410,11 @@ const vi = {
   "backup.merge": "Gộp",
   "backup.replace": "Thay thế",
   "backup.summary": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { groups = 0, subscriptions = 0 } = vars ?? {};
-    return `${pluralPart(Number(groups), { one: "# nhóm", other: "# nhóm" }, runtime)} · ${pluralPart(Number(subscriptions), { one: "# đăng ký", other: "# đăng ký" }, runtime)}`;
+    const { groups = 0 } = vars ?? {};
+    return `${pluralPart(Number(groups), { one: "# nhóm", other: "# nhóm" }, runtime)}`;
   },
   "backup.mergeHint":
-    "Chế độ gộp sẽ nối thêm hồ sơ/nhóm/đăng ký đã nhập và chồng đè cài đặt. Chế độ thay thế sẽ ghi đè hoàn toàn trạng thái hiện tại.",
+    "Chế độ gộp sẽ nối thêm hồ sơ/nhóm đã nhập và chồng đè cài đặt. Chế độ thay thế sẽ ghi đè hoàn toàn trạng thái hiện tại.",
   "backup.invalidJson": "JSON không hợp lệ",
   "backup.invalidStructure": "Cấu trúc sao lưu không hợp lệ",
   "backup.copied": "Đã sao chép bản sao lưu",
@@ -510,7 +429,6 @@ const vi = {
   "common.mode.auto": "Tự động (proxy trước, sau đó trực tiếp)",
   "common.mode.proxy": "Chỉ qua proxy",
   "common.mode.direct": "Chỉ trực tiếp",
-  "common.proxyNotRunning": "Hãy khởi động proxy trước khi dùng chế độ Chỉ qua proxy.",
   "common.openFile": "Mở tệp…",
   // qr
   "qr.scan.title": "Quét mã QR",
@@ -571,14 +489,6 @@ const vi = {
   "profiles.row.select": "Chọn",
   "profiles.row.edit": "Chỉnh sửa",
   "profiles.row.more": "Thêm",
-  // subscriptions extra
-  "subs.added": "Đã thêm đăng ký",
-  "subs.saved": "Đã lưu đăng ký",
-  "subs.deleted": "Đã xóa đăng ký",
-  "subs.confirmDel.prefix": "Gỡ",
-  "subs.toggleUrl": "Bật/tắt URL",
-  "subs.editAction": "Chỉnh sửa",
-  "subs.deleteAction": "Xóa",
   // routing rule sheet
   "routingSheet.newTitle": "Quy tắc định tuyến mới",
   "routingSheet.editTitle": "Chỉnh sửa quy tắc định tuyến",
@@ -614,14 +524,6 @@ const vi = {
   "routingSheet.sourceIpsHint": "Địa chỉ hoặc CIDR của các thiết bị dùng cổng proxy chia sẻ.",
   "routingSheet.delete": "Xóa",
   // asset file sheet
-  "assetSheet.addTitle": "Thêm tệp tài nguyên",
-  "assetSheet.editTitle": "Chỉnh sửa tệp tài nguyên",
-  "assetSheet.save": "Lưu",
-  "assetSheet.filename": "Tên tệp",
-  "assetSheet.filenamePh": "geoip.dat",
-  "assetSheet.url": "URL",
-  "assetSheet.urlPh": "https://github.com/.../download/geoip.dat",
-  "assetSheet.delete": "Xóa",
   // settings extra
   "settings.routingRulesEditor": "Trình sửa quy tắc",
   "settings.routingRulesHint":
@@ -641,13 +543,11 @@ const vi = {
   "settings.page.routing": "Định tuyến",
   "settings.page.network": "DNS và kết nối",
   "settings.page.networkSub": "DNS, mux, phân mảnh, cổng cục bộ",
-  "settings.page.resources": "Tệp tài nguyên",
   "settings.page.app": "Ứng dụng",
   "settings.page.appSub": "tự khởi động, nhật ký, sao lưu",
   "settings.page.about": "Giới thiệu",
   "settings.page.aboutSub": "Phiên bản, cập nhật, chẩn đoán",
   "settings.rulesCount": plural("count", { other: "# quy tắc" }),
-  "settings.assetCount": plural("count", { other: "# tệp" }),
   "settings.routingCatchAll":
     "Khớp mọi kết nối — các quy tắc bên dưới và bước kiểm tra IP tự động sẽ không chạy.",
   "settings.routingCatchAllRedundant":
@@ -667,22 +567,6 @@ const vi = {
   "settings.routingRuleNoMatch": "Không có trường khớp",
   "settings.routingReorder": "Sắp xếp lại quy tắc",
   "settings.routingRulesTitle": "Quy tắc",
-  "settings.assetFiles": "Tệp tài nguyên",
-  "settings.assetHint": "Đây là các cơ sở dữ liệu geo của Xray.",
-  "settings.assetUpdateAll": "Cập nhật tất cả",
-  "settings.assetAdd": "Thêm tệp",
-  "settings.assetAutoUpdate": "Tự động cập nhật",
-  "settings.assetAutoUpdateSub": "Làm mới geosite/geoip theo lịch",
-  "settings.assetUpdateInterval": "Khoảng cập nhật",
-  "settings.assetAutoUpdateWarning":
-    "Khi dữ liệu geo thay đổi, kết nối đang hoạt động sẽ khởi động lại trong giây lát để áp dụng.",
-  "settings.assetIntervalHours": plural("count", { other: "Mỗi # giờ" }),
-  "settings.assetIntervalDays": plural("count", { other: "Mỗi # ngày" }),
-  "settings.assetDownload": "Tải xuống",
-  "settings.assetDelete": "Xóa",
-  "settings.assetLinks": "Liên kết sẵn cho geoip.dat / geosite.dat",
-  "settings.assetUse": "Sử dụng",
-  "settings.assetNotDownloaded": "Chưa tải về",
   "settings.protocol.vless": "VLESS",
   "settings.protocol.vmess": "VMess",
   "settings.protocol.trojan": "Trojan",
@@ -748,7 +632,6 @@ const vi = {
   "store.service.restarted": "Đã khởi động lại",
   "store.service.stoppedProfileRemoved": "Dịch vụ đã dừng vì hồ sơ đang hoạt động đã bị gỡ",
   "store.service.stoppedProfileDeleted": "Dịch vụ đã dừng vì hồ sơ đang hoạt động đã bị xóa",
-  "store.service.stoppedSubRemoved": "Dịch vụ đã dừng vì đăng ký của hồ sơ đang hoạt động đã bị gỡ",
   "store.service.stoppedBeforeBackupRestore": "Dịch vụ đã dừng trước khi khôi phục bản sao lưu",
   "store.profile.copySuffix": "bản sao",
   "store.profile.imported": plural("count", {
@@ -767,24 +650,6 @@ const vi = {
   "store.ping.testFailed": "Kiểm tra thất bại: {error}",
   "store.dedup.done": plural("count", { one: "Đã xóa # mục trùng", other: "Đã xóa # mục trùng" }),
   "store.dedup.none": "Không tìm thấy mục trùng",
-  "store.sub.updateFailed": "Cập nhật thất bại: {name}",
-  "store.sub.updating": "Đang cập nhật {name}…",
-  "store.sub.updatedProfiles": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { count = 0, name = "" } = vars ?? {};
-    return `${name}: ${pluralPart(Number(count), { one: "# hồ sơ", other: "# hồ sơ" }, runtime)}`;
-  },
-  "store.asset.downloadFailed": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `Tải xuống thất bại (${selectPart(String(mode), { auto: "tự động", proxy: "qua proxy", direct: "trực tiếp", other: "{value}" }, runtime)}): ${name}`;
-  },
-  "store.asset.downloadFailedReason": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "", reason = "" } = vars ?? {};
-    return `Tải xuống thất bại (${selectPart(String(mode), { auto: "tự động", proxy: "qua proxy", direct: "trực tiếp", other: "{value}" }, runtime)}): ${name} · ${reason}`;
-  },
-  "store.asset.updated": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `Đã cập nhật ${name} qua ${selectPart(String(mode), { auto: "chế độ tự động", proxy: "proxy", direct: "kết nối trực tiếp", other: "{value}" }, runtime)}`;
-  },
   "store.backup.invalidJson": "JSON sao lưu không hợp lệ",
   "store.backup.invalidStructure": "Cấu trúc sao lưu không hợp lệ",
   "store.backup.restored": "Đã khôi phục bản sao lưu",

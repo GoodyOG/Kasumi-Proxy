@@ -29,8 +29,6 @@ export type Dispatch = (cmd: Command_Deserialize) => Promise<Response_Serialize>
 /** Push streams a transport exposes. Each callback gets the raw payload object. */
 export interface PushStreams {
   subscribeStatus(cb: (raw: unknown) => void): () => void;
-  subscribeSubApplied(cb: (raw: unknown) => void): () => void;
-  subscribeAssetsUpdated(cb: (raw: unknown) => void): () => void;
 }
 
 // ---- typed Response unwrapping ----
@@ -234,53 +232,6 @@ export function createBridge(dispatch: Dispatch, push: PushStreams): Bridge {
       return next;
     },
 
-    async fetchSubscription(url, opts) {
-      const profiles = await dispatch({
-        cmd: "fetchSubscription",
-        url,
-        mode: opts?.mode ?? "auto",
-        userAgent: opts?.userAgent ?? null,
-        allowInsecure: opts?.allowInsecure ?? false,
-      });
-      return asProfiles(profiles);
-    },
-    async applySubscription(subId) {
-      // Returns the canonical state — refresh the cache like readState/mutate do, so
-      // the next cache reader (e.g. ping's address/port lookup) can't drift after a
-      // subscription apply swaps the profile set out from under it.
-      const next = asState(await dispatch({ cmd: "applySubscription", subId }));
-      lastState = next;
-      return next;
-    },
-    onSubApplied(cb) {
-      return push.subscribeSubApplied((raw) => {
-        const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
-        if (typeof o.subId === "string") {
-          cb({
-            subId: o.subId,
-            remarks: typeof o.remarks === "string" ? o.remarks : "",
-            count: typeof o.count === "number" ? o.count : 0,
-          });
-        }
-      });
-    },
-    onAssetsUpdated(cb) {
-      return push.subscribeAssetsUpdated((raw) => {
-        const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
-        if (Array.isArray(o.remarks)) {
-          cb({
-            remarks: o.remarks.filter((r): r is string => typeof r === "string"),
-            restarted: o.restarted === true,
-          });
-        }
-      });
-    },
-    async downloadAsset(filename, url, mode: ResourceUpdateMode = "auto") {
-      return okResult(() => dispatch({ cmd: "downloadAsset", filename, url, mode }));
-    },
-    async listAssets() {
-      return asAssets(await dispatch({ cmd: "listAssets" }));
-    },
     async listApps(): Promise<AppEntry[]> {
       const r = await dispatch({ cmd: "listApps" });
       if (r.kind !== "apps") return [];

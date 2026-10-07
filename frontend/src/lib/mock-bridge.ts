@@ -277,9 +277,7 @@ ${stamp} [MOCK:${kind}] transport/internet: connection ends, reading error`);
       ...state,
       profiles: [...state.profiles],
       groups: [...state.groups],
-      subscriptions: [...state.subscriptions],
       routingRules: [...state.routingRules],
-      assetFiles: [...state.assetFiles],
     });
   },
 
@@ -288,55 +286,6 @@ ${stamp} [MOCK:${kind}] transport/internet: connection ends, reading error`);
     // backend runs, then return the canonical state.
     state = applyMutation(state, intent);
     return this.readState();
-  },
-
-  async fetchSubscription(url: string): Promise<Profile[]> {
-    // Simulate network delay
-    await new Promise((r) => setTimeout(r, 800));
-    return simFetchSub(url);
-  },
-
-  // Dev stand-in for the backend's server-side apply: fetch + filter + stamp +
-  // replace this subscription's profiles in the in-memory state.
-  async applySubscription(subId: string): Promise<AppState> {
-    const sub = state.subscriptions.find((x) => x.id === subId);
-    if (!sub) throw new Error(`subscription not found: ${subId}`);
-    await new Promise((r) => setTimeout(r, 800));
-    const re = sub.filter ? safeRegex(sub.filter) : null;
-    const mapped = simFetchSub(sub.url)
-      .filter((p) => !re || re.test(p.meta.remarks))
-      .map((p) => ({
-        ...p,
-        meta: { ...p.meta, subId: sub.id, groupId: sub.groupId ?? p.meta.groupId },
-      }));
-    const others = state.profiles.filter((p) => p.meta.subId !== sub.id);
-    state = { ...state, profiles: [...others, ...mapped] };
-    return this.readState();
-  },
-
-  // No backend daemon in dev, so headless sub-applies / asset refreshes never happen.
-  onSubApplied() {
-    return () => {};
-  },
-
-  onAssetsUpdated() {
-    return () => {};
-  },
-
-  async downloadAsset(
-    filename: string,
-    _url: string,
-    _mode: ResourceUpdateMode = "auto",
-  ): Promise<{ ok: boolean; error?: string }> {
-    await new Promise((r) => setTimeout(r, 1500));
-    if (!state.assetFiles.some((asset) => asset.remarks === filename)) {
-      return { ok: false, error: "Asset not tracked" };
-    }
-    return { ok: true };
-  },
-
-  async listAssets(): Promise<string[]> {
-    return state.assetFiles.map((asset) => asset.remarks);
   },
 
   async listApps() {
@@ -409,9 +358,7 @@ ${stamp} [MOCK:${kind}] transport/internet: connection ends, reading error`);
         ...state,
         profiles: [...state.profiles, ...incoming.profiles],
         groups: [...state.groups, ...incoming.groups],
-        subscriptions: [...state.subscriptions, ...incoming.subscriptions],
         routingRules: [...state.routingRules, ...incoming.routingRules],
-        assetFiles: [...state.assetFiles, ...incoming.assetFiles],
         settings: incoming.settings,
       };
     }

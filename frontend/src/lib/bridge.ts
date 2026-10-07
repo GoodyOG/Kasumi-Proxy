@@ -7,14 +7,12 @@
 // impl never touches a screen.
 // ============================================================
 import type {
-  AssetsUpdatedEvent,
   Capabilities,
   CoreResolution,
   FetchMode,
   LogTarget,
   Profile,
   RunState,
-  SubAppliedEvent,
   TestKind,
   ServiceStatus as WireServiceStatus,
 } from "../generated/bindings";
@@ -24,16 +22,12 @@ import type {
 // concrete all-fields-present shapes the UI holds in memory.
 export type {
   AdvancedSettings_Serialize as AdvancedSettings,
-  AssetFile,
-  AssetsUpdatedEvent,
   Capabilities,
   CoreResolution,
   Group,
   LogTarget,
   MutationIntent_Serialize as MutationIntent,
   RoutingRule,
-  SubAppliedEvent,
-  Subscription_Serialize as Subscription,
   TestKind,
 } from "../generated/bindings";
 
@@ -41,8 +35,9 @@ import type { AppState_Serialize, MutationIntent_Serialize } from "../generated/
 
 // The persisted app state as the UI holds it. `schemaVersion` is an on-disk
 // migration detail owned by the Rust read path, so the frontend neither tracks
-// nor writes it (the backend stamps it).
-export type AppState = Omit<AppState_Serialize, "schemaVersion">;
+// nor writes it (the backend stamps it). `subscriptions` was removed backend-side;
+// the UI type omits it so the store doesn't carry a dead field.
+export type AppState = Omit<AppState_Serialize, "schemaVersion" | "subscriptions">;
 
 /** The five truthful run states the UI renders (see Rust `RunState`):
  *  stopped · connecting · connected · noInternet · failed. */
@@ -115,33 +110,6 @@ export interface Bridge {
   // `replaceState` / `importBackup` intents — there is no separate writeState.
   mutate(intent: MutationIntent_Serialize): Promise<AppState>;
 
-  // subscriptions
-  fetchSubscription(
-    url: string,
-    opts?: { userAgent?: string; allowInsecure?: boolean; mode?: ResourceUpdateMode },
-  ): Promise<Profile[]>;
-
-  // Fetch one subscription and apply it server-side (fetch + map + dedup + apply,
-  // restarting the active data-path when affected), returning the new persisted
-  // state. Soft failures are recorded as the subscription's `lastError` in the
-  // returned state; the UI reloads from it instead of running the apply locally.
-  applySubscription(subId: string): Promise<AppState>;
-
-  // The daemon fetches & applies auto-update subscriptions itself; this stream
-  // tells the UI to reload the persisted state. Returns an unsubscribe.
-  onSubApplied(cb: (info: SubAppliedEvent) => void): () => void;
-
-  // Same, for the headless geo-asset refresh: it stamps each asset's `lastUpdated`
-  // (and may restart the core), so the UI reloads. Returns an unsubscribe.
-  onAssetsUpdated(cb: (info: AssetsUpdatedEvent) => void): () => void;
-
-  // asset files
-  downloadAsset(
-    filename: string,
-    url: string,
-    mode?: ResourceUpdateMode,
-  ): Promise<{ ok: boolean; error?: string }>;
-  listAssets(): Promise<string[]>;
   listApps(): Promise<AppEntry[]>;
   reloadAppFilter(): Promise<{ ok: boolean; error?: string }>;
 

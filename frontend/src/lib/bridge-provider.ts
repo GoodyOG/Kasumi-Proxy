@@ -106,46 +106,6 @@ export const bridge: Bridge = {
   async mutate(intent) {
     return (await loadBridge()).mutate(intent);
   },
-  async fetchSubscription(url, opts) {
-    return (await loadBridge()).fetchSubscription(url, opts);
-  },
-  async applySubscription(subId) {
-    return (await loadBridge()).applySubscription(subId);
-  },
-  onSubApplied(cb) {
-    let unsubscribed = false;
-    let dispose: (() => void) | null = null;
-
-    void loadBridge().then((impl) => {
-      if (unsubscribed) return;
-      dispose = impl.onSubApplied(cb);
-    });
-
-    return () => {
-      unsubscribed = true;
-      dispose?.();
-    };
-  },
-  onAssetsUpdated(cb) {
-    let unsubscribed = false;
-    let dispose: (() => void) | null = null;
-
-    void loadBridge().then((impl) => {
-      if (unsubscribed) return;
-      dispose = impl.onAssetsUpdated(cb);
-    });
-
-    return () => {
-      unsubscribed = true;
-      dispose?.();
-    };
-  },
-  async downloadAsset(filename, url, mode) {
-    return (await loadBridge()).downloadAsset(filename, url, mode);
-  },
-  async listAssets() {
-    return (await loadBridge()).listAssets();
-  },
   async listApps() {
     return (await loadBridge()).listApps();
   },

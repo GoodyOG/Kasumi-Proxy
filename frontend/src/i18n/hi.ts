@@ -2,7 +2,7 @@
 // i18n/hi.ts
 // Full Hindi dictionary.
 // ============================================================
-import { plural, pluralPart, selectPart } from "./messages";
+import { plural, pluralPart } from "./messages";
 import type { MessageRuntime, MessageValue, Vars } from "./runtime";
 
 const hi = {
@@ -11,7 +11,6 @@ const hi = {
   // nav
   "nav.overview": "अवलोकन",
   "nav.profiles": "प्रोफ़ाइल",
-  "nav.subs": "सदस्यताएँ",
   "nav.settings": "सेटिंग्स",
   // overview
   "overview.title": "Kasumi Proxy",
@@ -24,7 +23,6 @@ const hi = {
   "overview.noInternet": "इंटरनेट नहीं",
   "overview.failed": "विफल",
   "overview.noActiveProfile": "कोई सक्रिय प्रोफ़ाइल चयनित नहीं है",
-  "overview.needsAssets": "इस रूटिंग मोड का उपयोग करने से पहले जियो संसाधन फ़ाइलें डाउनलोड करें।",
   "overview.download": "डाउनलोड",
   "overview.upload": "अपलोड",
   "overview.uptime": "अपटाइम",
@@ -41,10 +39,8 @@ const hi = {
   "tray.recent": "हाल के प्रोफ़ाइल",
   "overview.profilesCounter": "प्रोफ़ाइल",
   "overview.groupsCounter": "समूह",
-  "overview.subsCounter": "सदस्यताएँ",
   "overview.quickActions": "त्वरित क्रियाएँ",
   "overview.openProfiles": "प्रोफ़ाइल खोलें",
-  "overview.updateAllSubs": "सभी सदस्यताएँ अपडेट करें",
   "overview.pingAll": "सभी को पिंग करें",
   "overview.backupRestore": "बैकअप और पुनर्स्थापना",
   "overview.recentActivity": "हाल की गतिविधि",
@@ -56,7 +52,6 @@ const hi = {
     one: "# प्रोफ़ाइल आयात की",
     other: "# प्रोफ़ाइलें आयात की",
   }),
-  "activity.subUpdated": "सदस्यता अपडेट · {name}",
   "activity.pingComplete": plural("count", {
     one: "पिंग पूर्ण · # प्रोफ़ाइल",
     other: "पिंग पूर्ण · # प्रोफ़ाइलें",
@@ -72,8 +67,6 @@ const hi = {
     other: "# अपहुँच प्रोफ़ाइलें हटाई",
   }),
   "activity.duplicatesRemoved": plural("count", { one: "# डुप्लिकेट हटाया", other: "# डुप्लिकेट हटाए" }),
-  "activity.assetDownloaded": "संसाधन अपडेट · {name}",
-  "activity.assetRestart": "नया जियो डेटा लागू करने के लिए कनेक्शन पुनः आरंभ हुआ",
   "activity.profileSaved": "प्रोफ़ाइल सहेजी · {remarks}",
   "time.now": "अभी",
   "time.ago": "{n}{unit} पहले",
@@ -262,74 +255,6 @@ const hi = {
   "editor.acceptProxyProtocol": "PROXY प्रोटोकॉल स्वीकार करें",
   "editor.vmessGlobalPadding": "ग्लोबल पैडिंग",
   "editor.vmessAuthenticatedLength": "प्रमाणित लंबाई",
-  // subscriptions
-  "subs.title": "सदस्यताएँ",
-  "subs.subtitle": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { active = 0, imported = 0 } = vars ?? {};
-    return `${pluralPart(Number(active), { one: "# सक्रिय सदस्यता", other: "# सक्रिय सदस्यताएँ" }, runtime)} · ${pluralPart(Number(imported), { one: "# आयातित प्रोफ़ाइल", other: "# आयातित प्रोफ़ाइलें" }, runtime)}`;
-  },
-  "subs.updateAll": "सभी अपडेट करें",
-  "subs.add": "जोड़ें",
-  "subs.add.manual": "मैन्युअल रूप से जोड़ें",
-  "subs.add.manualSub": "विकल्पों के साथ एक सदस्यता",
-  "subs.add.paste": "सूची चिपकाएँ",
-  "subs.add.pasteSub": "कई URL या निर्यात किया गया JSON",
-  "subs.export": "निर्यात",
-  "subs.copyUrl": "URL कॉपी करें",
-  "subs.urlCopied": "URL कॉपी किया गया",
-  "subs.exportHint": "बैकअप लेने या किसी अन्य डिवाइस पर ले जाने के लिए अपनी सदस्यताएँ क्लिपबोर्ड पर कॉपी करें।",
-  "subs.exportUrls": "URL कॉपी करें",
-  "subs.exportJson": "JSON के रूप में कॉपी करें",
-  "subs.exportEmpty": "निर्यात के लिए कोई सदस्यता नहीं",
-  "subs.import": "आयात",
-  "subs.importLabel": "सदस्यता URL या JSON",
-  "subs.importHint": "सदस्यता URL (प्रति पंक्ति एक) या किसी अन्य डिवाइस से निर्यात किया गया JSON पेस्ट करें।",
-  "subs.importBtn": "आयात करें",
-  "subs.importEmpty": "आयात करने के लिए कुछ नहीं",
-  "subs.importInvalid": "इनपुट का विश्लेषण नहीं किया जा सका",
-  "subs.imported": plural("count", {
-    one: "# सदस्यता आयात की गई",
-    other: "# सदस्यताएँ आयात की गईं",
-  }),
-  "subs.exportCopied": plural("count", {
-    one: "# सदस्यता कॉपी की गई",
-    other: "# सदस्यताएँ कॉपी की गईं",
-  }),
-  "subs.addBtn": "सदस्यता जोड़ें",
-  "subs.infoText":
-    "प्रत्येक सदस्यता अपने सर्वरों को चुने गए समूह में आयात करती है। अपडेट करने पर, जहाँ संभव हो, आपका सक्रिय चयन बनाए रखते हुए उन प्रोफ़ाइलों को ताज़ा किया जाता है।",
-  "subs.autoLabel": "स्वचालित · {interval}",
-  "subs.manualLabel": "मैनुअल",
-  "subs.insecureLabel": "असुरक्षित",
-  "subs.errorLabel": "त्रुटि",
-  "subs.updateBtn": "अपडेट",
-  "subs.neverUpdated": "कभी नहीं",
-  "subs.updatedAt": "अपडेट किया गया {date}",
-  "subs.profilesCount": plural("n", { one: "# प्रोफ़ाइल", other: "# प्रोफ़ाइलें" }),
-  "subs.confirmDel.title": "सदस्यता हटाएँ?",
-  "subs.confirmDel.body": "इस स्रोत से आयातित प्रोफ़ाइलें भी हटा दी जाएँगी।",
-  "subs.confirmDel.cancel": "रद्द करें",
-  "subs.confirmDel.delete": "हटाएँ",
-  "subs.edit.newTitle": "सदस्यता जोड़ें",
-  "subs.edit.editTitle": "सदस्यता संपादित करें",
-  "subs.edit.save": "सहेजें",
-  "subs.edit.remarks": "टिप्पणी",
-  "subs.edit.remarksPh": "मेरा प्रदाता",
-  "subs.edit.url": "सदस्यता URL",
-  "subs.edit.urlPh": "https://…",
-  "subs.edit.targetGroup": "लक्षित समूह",
-  "subs.edit.userAgent": "User-Agent",
-  "subs.edit.userAgentPh": "default",
-  "subs.edit.filter": "फ़िल्टर (regex)",
-  "subs.edit.filterPh": "(?i)premium",
-  "subs.autoUpdate": "स्वचालित अपडेट",
-  "subs.autoUpdateSub": "निर्धारित समय पर ताज़ा करें",
-  "subs.interval": "अंतराल (hh:mm)",
-  "subs.edit.urlInsecureHint": "अनएन्क्रिप्टेड HTTP — यह सदस्यता ट्रांज़िट में बदली जा सकती है।",
-  "subs.edit.validationRemarks": "टिप्पणी आवश्यक है",
-  "subs.edit.validationUrl": "सदस्यता URL आवश्यक है",
-  "subs.edit.validationInterval": "अंतराल 0 से बड़ा होना चाहिए",
-  "subs.edit.validationFilter": "अमान्य regex",
   // settings
   "settings.title": "सेटिंग्स",
   "settings.subtitle": "रूटिंग और कोर",
@@ -338,7 +263,6 @@ const hi = {
   "settings.xrayVersion": "Xray संस्करण",
   "settings.tun": "TUN",
   "settings.profiles": "प्रोफ़ाइल",
-  "settings.subscriptions": "सदस्यताएँ",
   "settings.activeProfile": "सक्रिय प्रोफ़ाइल",
   "settings.activeSelected": "चयनित",
   "settings.activeNone": "कोई नहीं",
@@ -426,8 +350,6 @@ const hi = {
   "settings.dnsHosts": "स्थिर hosts",
   "settings.dnsHostsPh": "example.com=1.2.3.4\ndomain.net=5.6.7.8",
   "settings.dnsHostsHint": "प्रति पंक्ति एक host=ip, या raw JSON object",
-  "settings.ipv6": "IPv6 सक्षम करें",
-  "settings.ipv6Sub": "IPv6 पतों को resolve और route करें",
   "settings.socksAuth": "SOCKS प्रमाणीकरण",
   "settings.socksUser": "उपयोगकर्ता नाम",
   "settings.socksPass": "पासवर्ड",
@@ -487,11 +409,11 @@ const hi = {
   "backup.merge": "मर्ज",
   "backup.replace": "प्रतिस्थापित करें",
   "backup.summary": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { groups = 0, subscriptions = 0 } = vars ?? {};
-    return `${pluralPart(Number(groups), { one: "# समूह", other: "# समूह" }, runtime)} · ${pluralPart(Number(subscriptions), { one: "# सदस्यता", other: "# सदस्यताएँ" }, runtime)}`;
+    const { groups = 0 } = vars ?? {};
+    return `${pluralPart(Number(groups), { one: "# समूह", other: "# समूह" }, runtime)}`;
   },
   "backup.mergeHint":
-    "मर्ज आयातित प्रोफ़ाइलों/समूहों/सदस्यताओं को जोड़ता है और सेटिंग्स को ओवरले करता है। Replace वर्तमान canonical state को पूरी तरह अधिलेखित कर देता है।",
+    "मर्ज आयातित प्रोफ़ाइलों/समूहों को जोड़ता है और सेटिंग्स को ओवरले करता है। Replace वर्तमान canonical state को पूरी तरह अधिलेखित कर देता है।",
   "backup.invalidJson": "अमान्य JSON",
   "backup.invalidStructure": "अमान्य बैकअप संरचना",
   "backup.copied": "बैकअप कॉपी हो गया",
@@ -506,7 +428,6 @@ const hi = {
   "common.mode.auto": "स्वचालित (पहले proxy, फिर direct)",
   "common.mode.proxy": "केवल proxy",
   "common.mode.direct": "केवल direct",
-  "common.proxyNotRunning": "Proxy only mode उपयोग करने से पहले प्रॉक्सी शुरू करें।",
   "common.openFile": "फ़ाइल खोलें…",
   // qr
   "qr.scan.title": "QR कोड स्कैन करें",
@@ -567,14 +488,6 @@ const hi = {
   "profiles.row.select": "चयन करें",
   "profiles.row.edit": "संपादित करें",
   "profiles.row.more": "और",
-  // subscriptions extra
-  "subs.added": "सदस्यता जोड़ दी गई",
-  "subs.saved": "सदस्यता सहेज दी गई",
-  "subs.deleted": "सदस्यता हटा दी गई",
-  "subs.confirmDel.prefix": "हटाएँ",
-  "subs.toggleUrl": "URL टॉगल करें",
-  "subs.editAction": "संपादित करें",
-  "subs.deleteAction": "हटाएँ",
   // routing rule sheet
   "routingSheet.newTitle": "नया रूटिंग नियम",
   "routingSheet.editTitle": "रूटिंग नियम संपादित करें",
@@ -610,14 +523,6 @@ const hi = {
   "routingSheet.sourceIpsHint": "साझा प्रॉक्सी पोर्ट इस्तेमाल करने वाले डिवाइसों के पते या CIDR।",
   "routingSheet.delete": "हटाएँ",
   // asset file sheet
-  "assetSheet.addTitle": "रिसोर्स फ़ाइल जोड़ें",
-  "assetSheet.editTitle": "रिसोर्स फ़ाइल संपादित करें",
-  "assetSheet.save": "सहेजें",
-  "assetSheet.filename": "फ़ाइल नाम",
-  "assetSheet.filenamePh": "geoip.dat",
-  "assetSheet.url": "URL",
-  "assetSheet.urlPh": "https://github.com/.../download/geoip.dat",
-  "assetSheet.delete": "हटाएँ",
   // settings extra
   "settings.routingRulesEditor": "नियम संपादक",
   "settings.routingRulesHint": "Xray-शैली रूटिंग नियम दर्ज करें। अंतिम प्रॉक्सी फॉलबैक अपने-आप जुड़ जाता है।",
@@ -636,13 +541,11 @@ const hi = {
   "settings.page.routing": "रूटिंग",
   "settings.page.network": "DNS और कनेक्शन",
   "settings.page.networkSub": "DNS, mux, फ़्रैगमेंट, लोकल पोर्ट",
-  "settings.page.resources": "संसाधन फ़ाइलें",
   "settings.page.app": "ऐप",
   "settings.page.appSub": "ऑटोस्टार्ट, लॉग, बैकअप",
   "settings.page.about": "परिचय",
   "settings.page.aboutSub": "संस्करण, अपडेट, डायग्नोस्टिक्स",
   "settings.rulesCount": plural("count", { one: "# नियम", other: "# नियम" }),
-  "settings.assetCount": plural("count", { one: "# फ़ाइल", other: "# फ़ाइलें" }),
   "settings.routingCatchAll": "हर कनेक्शन से मेल खाता है — नीचे के नियम और स्वचालित IP जाँच कभी नहीं चलते।",
   "settings.routingCatchAllRedundant":
     "हर कनेक्शन से मेल खाता है। प्रॉक्सी पर अंतिम फ़ॉलबैक पहले से ही अपने आप जुड़ जाता है, इसलिए यह नियम सिर्फ़ स्वचालित IP जाँच छीन लेता है।",
@@ -661,22 +564,6 @@ const hi = {
   "settings.routingRuleNoMatch": "कोई मैच फ़ील्ड नहीं",
   "settings.routingReorder": "नियम का क्रम बदलें",
   "settings.routingRulesTitle": "नियम",
-  "settings.assetFiles": "रिसोर्स फ़ाइलें",
-  "settings.assetHint": "ये Xray geo databases हैं।",
-  "settings.assetUpdateAll": "सभी अपडेट करें",
-  "settings.assetAdd": "फ़ाइल जोड़ें",
-  "settings.assetAutoUpdate": "स्वतः अपडेट",
-  "settings.assetAutoUpdateSub": "geosite/geoip को निर्धारित समय पर अपडेट करें",
-  "settings.assetUpdateInterval": "अपडेट अंतराल",
-  "settings.assetAutoUpdateWarning":
-    "जब जियो डेटा बदलता है, तो उसे लागू करने के लिए सक्रिय कनेक्शन कुछ देर के लिए पुनः आरंभ होता है।",
-  "settings.assetIntervalHours": plural("count", { one: "हर # घंटे", other: "हर # घंटे" }),
-  "settings.assetIntervalDays": plural("count", { one: "हर # दिन", other: "हर # दिन" }),
-  "settings.assetDownload": "डाउनलोड",
-  "settings.assetDelete": "हटाएँ",
-  "settings.assetLinks": "geoip.dat / geosite.dat के लिए तैयार लिंक",
-  "settings.assetUse": "उपयोग करें",
-  "settings.assetNotDownloaded": "अभी डाउनलोड नहीं किया गया",
   "settings.protocol.vless": "VLESS",
   "settings.protocol.vmess": "VMess",
   "settings.protocol.trojan": "Trojan",
@@ -742,7 +629,6 @@ const hi = {
   "store.service.restarted": "पुनः प्रारंभ किया गया",
   "store.service.stoppedProfileRemoved": "सेवा रोक दी गई क्योंकि सक्रिय प्रोफ़ाइल हटा दी गई थी",
   "store.service.stoppedProfileDeleted": "सेवा रोक दी गई क्योंकि सक्रिय प्रोफ़ाइल मिटा दी गई थी",
-  "store.service.stoppedSubRemoved": "सेवा रोक दी गई क्योंकि सक्रिय प्रोफ़ाइल की सदस्यता हटा दी गई थी",
   "store.service.stoppedBeforeBackupRestore": "बैकअप पुनर्स्थापना से पहले सेवा रोक दी गई",
   "store.profile.copySuffix": "कॉपी",
   "store.profile.imported": plural("count", {
@@ -761,24 +647,6 @@ const hi = {
   "store.ping.testFailed": "परीक्षण विफल: {error}",
   "store.dedup.done": plural("count", { one: "# डुप्लिकेट हटाया", other: "# डुप्लिकेट हटाए" }),
   "store.dedup.none": "कोई डुप्लिकेट नहीं मिला",
-  "store.sub.updateFailed": "अपडेट विफल: {name}",
-  "store.sub.updating": "{name} अपडेट किया जा रहा है…",
-  "store.sub.updatedProfiles": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { count = 0, name = "" } = vars ?? {};
-    return `${name}: ${pluralPart(Number(count), { one: "# प्रोफ़ाइल", other: "# प्रोफ़ाइलें" }, runtime)}`;
-  },
-  "store.asset.downloadFailed": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `डाउनलोड विफल (${selectPart(String(mode), { auto: "स्वचालित", proxy: "proxy", direct: "direct", other: "{value}" }, runtime)}): ${name}`;
-  },
-  "store.asset.downloadFailedReason": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "", reason = "" } = vars ?? {};
-    return `डाउनलोड विफल (${selectPart(String(mode), { auto: "स्वचालित", proxy: "proxy", direct: "direct", other: "{value}" }, runtime)}): ${name} · ${reason}`;
-  },
-  "store.asset.updated": (vars: Vars | undefined, runtime: MessageRuntime) => {
-    const { mode = "other", name = "" } = vars ?? {};
-    return `${name} को ${selectPart(String(mode), { auto: "स्वचालित", proxy: "proxy", direct: "direct", other: "{value}" }, runtime)} के माध्यम से अपडेट किया गया`;
-  },
   "store.backup.invalidJson": "अमान्य बैकअप JSON",
   "store.backup.invalidStructure": "अमान्य बैकअप संरचना",
   "store.backup.restored": "बैकअप पुनर्स्थापित किया गया",

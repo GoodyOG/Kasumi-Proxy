@@ -95,7 +95,6 @@ fn parse_cli(args: &[String]) -> Option<Command> {
         "status" => Command::Status,
         "wsInfo" => Command::WsInfo,
         "capabilities" => Command::Capabilities,
-        "listAssets" => Command::ListAssets,
         "listApps" => Command::ListApps,
         "clearLogs" => Command::ClearLogs,
         "rotateLogs" => Command::RotateLogs { max_kb: None },

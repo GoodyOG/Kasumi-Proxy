@@ -11,16 +11,11 @@ import { translateCurrent } from "../i18n";
 import type {
   AdvancedSettings,
   AppState,
-  AssetFile,
-  AssetsUpdatedEvent,
   Capabilities,
   CoreResolution,
   MutationIntent,
-  ResourceUpdateMode,
   RoutingRule,
   ServiceStatus,
-  SubAppliedEvent,
-  Subscription,
 } from "../lib/bridge";
 import { isServiceUp } from "../lib/bridge";
 import { bridge } from "../lib/bridge-provider";
@@ -100,24 +95,12 @@ interface Store extends AppState {
   removeGroup: (id: string) => Promise<void>;
   reorderGroups: (from: number, to: number) => Promise<void>;
 
-  // subscriptions
-  upsertSub: (s: Subscription) => Promise<void>;
-  removeSub: (id: string) => Promise<void>;
-  updateSub: (id: string) => Promise<void>;
-  updateAllSubs: () => Promise<void>;
-
   // routing rules
   addRoutingRule: (rule: RoutingRule) => Promise<void>;
   updateRoutingRule: (id: string, patch: Partial<RoutingRule>) => Promise<void>;
   removeRoutingRule: (id: string) => Promise<void>;
   reorderRoutingRules: (from: number, to: number) => Promise<void>;
   importRoutingRules: (rules: RoutingRule[], mode: "merge" | "replace") => Promise<void>;
-
-  // asset files
-  addAssetFile: (asset: AssetFile) => Promise<void>;
-  updateAssetFile: (id: string, patch: Partial<AssetFile>) => Promise<void>;
-  removeAssetFile: (id: string) => Promise<void>;
-  downloadAsset: (id: string, mode?: ResourceUpdateMode) => Promise<void>;
 
   // settings
   setSetting: <K extends keyof AdvancedSettings>(k: K, v: AdvancedSettings[K]) => Promise<void>;
@@ -169,9 +152,7 @@ export const useAppStore = create<Store>((set, get) => {
       return {
         profiles: next.profiles,
         groups: next.groups,
-        subscriptions: next.subscriptions,
         routingRules: next.routingRules,
-        assetFiles: next.assetFiles,
         settings: mergeSettings(next.settings),
         activeId: next.activeId,
         version: next.version ?? __MODULE_VERSION__,
@@ -183,9 +164,6 @@ export const useAppStore = create<Store>((set, get) => {
   // AppState the backend returns. No local invariant logic, no full-state shipping.
   const mutate = (intent: MutationIntent) => bridge.mutate(intent).then(applyState);
   let lastTrafficSample: { uploadBytes: number; downloadBytes: number; at: number } | null = null;
-  // hydrate() can run more than once (tests, dev StrictMode) — register the
-  // background watchers a single time.
-  let daemonPushWatchStarted = false;
   const syncService = (service: ServiceStatus) => {
     const now = Date.now();
     let uploadRate = 0;
@@ -222,46 +200,6 @@ export const useAppStore = create<Store>((set, get) => {
         ? { testResults: withTest(get(), activeId, { ping: latencyMs }) }
         : {};
     set({ service: { ...service, pendingRestart }, uploadRate, downloadRate, ...freshPing });
-  };
-  // The daemon fetched & applied a subscription headlessly (it owns the restart
-  // decision too) — re-read the persisted state so the UI reflects the new
-  // profiles. Safe to overwrite in-memory data: every user mutation writes
-  // through immediately, so at most an in-flight edit races this.
-  const onDaemonSubApplied = async (info: SubAppliedEvent) => {
-    try {
-      const state = await bridge.readState();
-      set({
-        profiles: state.profiles,
-        groups: state.groups,
-        subscriptions: state.subscriptions,
-        routingRules: state.routingRules,
-        assetFiles: state.assetFiles,
-        settings: mergeSettings(state.settings),
-        activeId: state.activeId,
-      });
-      refreshCoreResolutions(state.profiles);
-    } catch {
-      return;
-    }
-    pushActivity("cloud_sync", translateCurrent("activity.subUpdated", { name: info.remarks }));
-  };
-  // The daemon refreshed the geo assets headlessly: it stamped each asset's
-  // `lastUpdated` and may have restarted the core, so re-read the persisted state
-  // the same way a headless sub-apply does.
-  const onDaemonAssetsUpdated = async (info: AssetsUpdatedEvent) => {
-    try {
-      const state = await bridge.readState();
-      set({ assetFiles: state.assetFiles, settings: mergeSettings(state.settings) });
-    } catch {
-      return;
-    }
-    for (const name of info.remarks) {
-      pushActivity("folder_zip", translateCurrent("activity.assetDownloaded", { name }));
-    }
-    // A restart the user didn't ask for needs saying out loud.
-    if (info.restarted) {
-      pushActivity("autorenew", translateCurrent("activity.assetRestart"));
-    }
   };
   const waitForUiPaint = () =>
     new Promise<void>((resolve) => {
@@ -303,9 +241,7 @@ export const useAppStore = create<Store>((set, get) => {
   return {
     profiles: [],
     groups: [],
-    subscriptions: [],
     routingRules: [],
-    assetFiles: [],
     settings: EMPTY_SETTINGS,
     activeId: null,
     hydrated: false,
@@ -334,18 +270,11 @@ export const useAppStore = create<Store>((set, get) => {
 
     async hydrate() {
       const state = await bridge.readState();
-      const needsMigration = !state.version;
-      const subscriptions = needsMigration
-        ? state.subscriptions.map((s) => ({ ...s, interval: s.interval * 60 }))
-        : state.subscriptions;
-      // Base group, legacy default assets and a dangling active_id are normalized by
-      // the backend read path now; the frontend just renders what it returns.
-      const assetFiles0 = state.assetFiles;
+      // Base group and a dangling active_id are normalized by the backend read
+      // path now; the frontend just renders what it returns.
       const settings = mergeSettings(state.settings);
       set({
         ...state,
-        subscriptions,
-        assetFiles: assetFiles0,
         settings,
         version: __MODULE_VERSION__,
         hydrated: true,
@@ -364,23 +293,7 @@ export const useAppStore = create<Store>((set, get) => {
       } catch {
         /* ignore */
       }
-      // Post-hydrate: verify asset files on disk, write if migration needed.
-      let assetFiles = assetFiles0;
-      try {
-        const onDisk = new Set(await bridge.listAssets());
-        assetFiles = assetFiles0.map((a) =>
-          a.lastUpdated != null && !onDisk.has(a.remarks) ? { ...a, lastUpdated: null } : a,
-        );
-      } catch {
-        /* ignore */
-      }
-      if (
-        needsMigration ||
-        assetFiles.length !== state.assetFiles.length ||
-        assetFiles.some((a, i) => a.lastUpdated !== state.assetFiles[i]?.lastUpdated) ||
-        settings.routingMode !== state.settings.routingMode
-      ) {
-        set({ assetFiles });
+      if (settings.routingMode !== state.settings.routingMode) {
         // One-time client migration: persist the corrected state wholesale via the
         // bulk replace intent (the only non-granular write path).
         await mutate({
@@ -389,19 +302,10 @@ export const useAppStore = create<Store>((set, get) => {
           // phase the intent wants, which the backend re-stamps on write.
           state: {
             ...state,
-            subscriptions,
-            assetFiles,
             settings,
             version: __MODULE_VERSION__,
           } as AppState_Serialize,
         });
-      }
-      // The daemon fetches subscriptions and geo assets headlessly; reload the
-      // persisted state whenever it pushes about one.
-      if (!daemonPushWatchStarted) {
-        daemonPushWatchStarted = true;
-        bridge.onSubApplied((info) => void onDaemonSubApplied(info));
-        bridge.onAssetsUpdated((info) => void onDaemonAssetsUpdated(info));
       }
     },
     notify(msg) {
@@ -730,69 +634,6 @@ export const useAppStore = create<Store>((set, get) => {
       await mutate({ kind: "removeGroup", id });
     },
 
-    async upsertSub(sub) {
-      // The daemon's auto-update loop re-reads state every tick, so a new or
-      // edited subscription is picked up within a minute — no wakeup needed.
-      await mutate({ kind: "upsertSub", subscription: sub });
-    },
-    async removeSub(id) {
-      const { profiles, activeId } = get();
-      const activeProfile = profiles.find((p) => p.meta.id === activeId);
-      if (activeProfile?.meta.subId === id)
-        await stopServiceIfRunning(translateCurrent("store.service.stoppedSubRemoved"));
-      await mutate({ kind: "removeSub", id });
-    },
-    async updateSub(id) {
-      const { subscriptions, service } = get();
-      const sub = subscriptions.find((x) => x.id === id);
-      if (!sub) return;
-
-      // "proxy" mode can only fetch through a live core — guard it client-side so
-      // the failure is explained up front rather than as a fetch timeout (the
-      // backend can't tell a stopped proxy from an unreachable URL).
-      if (sub.updateMode === "proxy" && !isServiceUp(service.state)) {
-        await mutate({
-          kind: "upsertSub",
-          subscription: { ...sub, lastError: translateCurrent("common.proxyNotRunning") },
-        });
-        get().notify(translateCurrent("common.proxyNotRunning"));
-        return;
-      }
-
-      get().notify(translateCurrent("store.sub.updating", { name: sub.remarks }));
-      let next: AppState;
-      try {
-        // The backend fetches, maps, dedups, applies, persists, and restarts the
-        // active data-path when affected; we just reflect the result.
-        next = await bridge.applySubscription(id);
-      } catch (e: unknown) {
-        await mutate({ kind: "upsertSub", subscription: { ...sub, lastError: errorMessage(e) } });
-        get().notify(translateCurrent("store.sub.updateFailed", { name: sub.remarks }));
-        return;
-      }
-
-      applyState(next);
-      await get().refreshStatus();
-
-      const updated = next.subscriptions.find((x) => x.id === id);
-      if (updated?.lastError) {
-        get().notify(translateCurrent("store.sub.updateFailed", { name: sub.remarks }));
-        return;
-      }
-      get().notify(
-        translateCurrent("store.sub.updatedProfiles", {
-          count: updated?.count ?? 0,
-          name: sub.remarks,
-        }),
-      );
-      pushActivity("cloud_sync", translateCurrent("activity.subUpdated", { name: sub.remarks }));
-    },
-    async updateAllSubs() {
-      for (const sub of get().subscriptions.filter((s) => s.enabled)) {
-        await get().updateSub(sub.id);
-      }
-    },
-
     addRoutingRule(rule) {
       return mutate({ kind: "upsertRoutingRule", rule });
     },
@@ -811,44 +652,6 @@ export const useAppStore = create<Store>((set, get) => {
       // Re-id imported rules so they never collide with existing ones.
       const incoming = rules.map((rule) => ({ ...rule, id: uid() }));
       return mutate({ kind: "importRoutingRules", rules: incoming, mode });
-    },
-
-    addAssetFile(asset) {
-      return mutate({ kind: "upsertAssetFile", asset });
-    },
-    updateAssetFile(id, assetPatch) {
-      const asset = get().assetFiles.find((a) => a.id === id);
-      if (!asset) return Promise.resolve();
-      return mutate({ kind: "upsertAssetFile", asset: { ...asset, ...assetPatch } });
-    },
-    removeAssetFile(id) {
-      return mutate({ kind: "removeAssetFile", id });
-    },
-    async downloadAsset(id, mode = "auto") {
-      const asset = get().assetFiles.find((item) => item.id === id);
-      if (!asset) return;
-      const result = await bridge.downloadAsset(asset.remarks, asset.url, mode);
-      if (!result.ok) {
-        get().notify(
-          result.error
-            ? translateCurrent("store.asset.downloadFailedReason", {
-                mode,
-                name: asset.remarks,
-                reason: result.error,
-              })
-            : translateCurrent("store.asset.downloadFailed", { mode, name: asset.remarks }),
-        );
-        return;
-      }
-      await mutate({
-        kind: "upsertAssetFile",
-        asset: { ...asset, lastUpdated: Date.now() },
-      });
-      pushActivity(
-        "file_download_done",
-        translateCurrent("activity.assetDownloaded", { name: asset.remarks }),
-      );
-      get().notify(translateCurrent("store.asset.updated", { mode, name: asset.remarks }));
     },
 
     setSetting(k, v) {

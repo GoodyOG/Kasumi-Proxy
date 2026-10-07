@@ -12,7 +12,6 @@ export const EMPTY_SETTINGS: AdvancedSettings = {
   ...DEFAULT_ADVANCED_SETTINGS,
   muxXudpConcurrency: 8,
   muxXudp443: "reject",
-  ipv6Enabled: false,
   delayTestUrl: DEFAULT_DELAY_TEST_URL,
   speedTestUrl: DEFAULT_SPEED_TEST_URL,
 };

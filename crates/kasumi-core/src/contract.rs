@@ -114,24 +114,6 @@ pub struct Capabilities {
     pub tun: bool,
 }
 
-/// Daemon push: it fetched & applied a subscription headlessly.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, specta::Type)]
-pub struct SubAppliedEvent {
-    #[serde(rename = "subId")]
-    pub sub_id: String,
-    pub remarks: String,
-    pub count: u32,
-}
-
-/// Daemon push: it refreshed geo assets headlessly. `restarted` says whether the
-/// active core was bounced to pick the new data up, so the UI can explain a
-/// connection blip it didn't ask for.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, specta::Type)]
-pub struct AssetsUpdatedEvent {
-    pub remarks: Vec<String>,
-    pub restarted: bool,
-}
-
 /// One WS RPC call (client → daemon).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct RpcRequest {
@@ -154,16 +136,12 @@ pub struct RpcResponse {
     pub error: Option<String>,
 }
 
-/// Server-initiated frames (no `id`): live status and headless sub-apply.
+/// Server-initiated frames (no `id`): live status pushes.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, specta::Type)]
 #[serde(tag = "event")]
 pub enum PushFrame {
     #[serde(rename = "status")]
     Status { value: ServiceStatus },
-    #[serde(rename = "subApplied")]
-    SubApplied { value: SubAppliedEvent },
-    #[serde(rename = "assetsUpdated")]
-    AssetsUpdated { value: AssetsUpdatedEvent },
 }
 
 /// WS bootstrap the daemon writes (and serves via the `wsInfo` command).
@@ -249,20 +227,6 @@ mod tests {
         assert!(v["engine"].is_null());
     }
 
-    #[test]
-    fn push_frame_tagged_on_event() {
-        let f = PushFrame::SubApplied {
-            value: SubAppliedEvent {
-                sub_id: "s1".into(),
-                remarks: "Home".into(),
-                count: 3,
-            },
-        };
-        let v = serde_json::to_value(&f).unwrap();
-        assert_eq!(v["event"], "subApplied");
-        assert_eq!(v["value"]["subId"], "s1");
-        assert_eq!(v["value"]["count"], 3);
-    }
 
     #[test]
     fn log_target_values() {

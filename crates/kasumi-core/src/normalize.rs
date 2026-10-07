@@ -16,13 +16,11 @@ use crate::chain::fixup_dangling_via;
 use crate::state::{AppState, BASE_GROUP_ID, BASE_GROUP_NAME, Group, fixup_active_id};
 
 /// Legacy locked asset ids that used to ship as built-in defaults; dropped on read.
-const LEGACY_DEFAULT_ASSET_IDS: [&str; 2] = ["asset-geoip", "asset-geosite"];
 
 /// Normalize a freshly-read [`AppState`] in place: ensure the base group exists,
 /// drop legacy default assets, and null a dangling `active_id` and `via`s.
 pub fn normalize_app_state(state: &mut AppState) {
     ensure_base_group(state);
-    strip_legacy_default_assets(state);
     fixup_active_id(state);
     fixup_dangling_via(state);
 }
@@ -36,23 +34,15 @@ fn ensure_base_group(state: &mut AppState) {
             Group {
                 id: BASE_GROUP_ID.into(),
                 name: BASE_GROUP_NAME.into(),
-                sub_id: None,
             },
         );
     }
 }
 
-/// Drop the locked geoip/geosite entries that used to be seeded as defaults.
-fn strip_legacy_default_assets(state: &mut AppState) {
-    state
-        .asset_files
-        .retain(|a| !(a.locked && LEGACY_DEFAULT_ASSET_IDS.contains(&a.id.as_str())));
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::state::{AssetFile, Group, default_app_state};
+    use crate::state::{Group, default_app_state};
 
     #[test]
     fn inserts_missing_base_group_at_front() {
@@ -60,7 +50,6 @@ mod tests {
         s.groups = vec![Group {
             id: "g2".into(),
             name: "Two".into(),
-            sub_id: None,
         }];
         normalize_app_state(&mut s);
         assert_eq!(s.groups[0].id, BASE_GROUP_ID);
@@ -74,44 +63,12 @@ mod tests {
         s.groups.push(Group {
             id: "g2".into(),
             name: "Two".into(),
-            sub_id: None,
         });
         normalize_app_state(&mut s);
         assert_eq!(s.groups.iter().filter(|g| g.id == BASE_GROUP_ID).count(), 1);
         assert_eq!(s.groups[0].id, BASE_GROUP_ID);
     }
 
-    #[test]
-    fn strips_only_locked_legacy_default_assets() {
-        let mut s = default_app_state();
-        s.asset_files = vec![
-            AssetFile {
-                id: "asset-geoip".into(),
-                remarks: "GeoIP".into(),
-                url: "u".into(),
-                last_updated: None,
-                locked: true,
-            },
-            // Same id but user-unlocked → kept.
-            AssetFile {
-                id: "asset-geosite".into(),
-                remarks: "GeoSite".into(),
-                url: "u".into(),
-                last_updated: None,
-                locked: false,
-            },
-            AssetFile {
-                id: "custom".into(),
-                remarks: "Custom".into(),
-                url: "u".into(),
-                last_updated: None,
-                locked: true,
-            },
-        ];
-        normalize_app_state(&mut s);
-        let ids: Vec<&str> = s.asset_files.iter().map(|a| a.id.as_str()).collect();
-        assert_eq!(ids, vec!["asset-geosite", "custom"]);
-    }
 
     #[test]
     fn nulls_dangling_active_id() {
