@@ -21,7 +21,7 @@ const TETHER_CHAIN: &str = "KASUMI_PROXY_TETHER";
 /// Hotspot/tethering interface prefixes, after AsteriskNG. The `+` wildcard
 /// matches interfaces created after the rules are installed.
 const TETHER_IFACES: &[&str] = &[
-    "wlan+", "ap+", "softap+", // Wi-Fi hotspot
+    "wlan+", "swlan+", "ap+", "softap+", // Wi-Fi hotspot
     "rndis+", "usb+", "ncm+", // USB tethering
     "bnep+", "bt-pan+", // Bluetooth tethering
     "eth+", // Ethernet
@@ -270,7 +270,7 @@ async fn apply_tether_rules() {
 
     // Already-marked or reply-direction packets: leave alone.
     silent(&[
-        IPTABLES, "-t", "mangle", "-A", TETHER_CHAIN, "-m", "mark", "--mark", "255", "-j", "RETURN",
+        IPTABLES, "-t", "mangle", "-A", TETHER_CHAIN, "-m", "mark", "--mark", "1", "-j", "RETURN",
     ])
     .await;
     silent(&[
@@ -292,12 +292,12 @@ async fn apply_tether_rules() {
             .await;
     }
 
-    // Tethered client → internet: mark for the TUN.
+    // Tethered client → internet: mark for the TUN (fwmark 1 → table 1100).
     for iface in TETHER_IFACES {
         for proto in ["tcp", "udp"] {
             silent(&[
                 IPTABLES, "-t", "mangle", "-A", TETHER_CHAIN,
-                "-i", iface, "-p", proto, "-j", "MARK", "--set-xmark", "255",
+                "-i", iface, "-p", proto, "-j", "MARK", "--set-xmark", "1",
             ])
             .await;
         }
