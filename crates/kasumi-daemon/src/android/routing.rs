@@ -557,7 +557,8 @@ pub async fn clear_routing_rules(st: &RoutingState) {
     // Our LAN-bypass rules: pref 5020-5022 send RFC1918 sources to the uplink
     // table, 5030-5050 to our tun table. Delete by priority — the band is ours
     // (the OS lives at pref 10000+); the loop clears any stacked duplicate.
-    for pref in ["5020", "5021", "5022", "5030", "5040", "5050"] {
+    // 1006-1008 are the tether-client bypass rules (to hotspot subnets → main).
+    for pref in ["5020", "5021", "5022", "5030", "5040", "5050", "1006", "1007", "1008"] {
         for _ in 0..4 {
             if ip_rule(false, &["rule", "del", "pref", pref]).await != 0 {
                 break;
@@ -637,6 +638,25 @@ pub async fn apply_external_tun_routing(st: &RoutingState) {
         IP, "route", "replace", "default", "dev", tun, "table", TUN_TABLE,
     ])
     .await;
+    // Traffic destined for tethered clients must not enter the TUN table —
+    // reply packets from hev may carry the fwmark, which would loop them back
+    // into the TUN. Route hotspot subnets via main, just before the fwmark rule.
+    for (subnet, pref) in [
+        ("192.168.0.0/16", "1008"),
+        ("10.0.0.0/8", "1007"),
+        ("172.16.0.0/12", "1006"),
+    ] {
+        ip_rule(
+            false,
+            &["rule", "del", "to", subnet, "table", "main", "priority", pref],
+        )
+        .await;
+        ip_rule(
+            false,
+            &["rule", "add", "to", subnet, "table", "main", "priority", pref],
+        )
+        .await;
+    }
     ip_rule(
         false,
         &[
