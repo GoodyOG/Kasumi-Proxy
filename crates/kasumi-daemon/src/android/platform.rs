@@ -28,7 +28,7 @@ use kasumi_core::tun::{TUN_IPV4, TUN_IPV6, TUN2_IPV4, TUN2_IPV6, TunOptions};
 
 use super::network::run_watcher;
 use super::paths::{
-    CORE_BINS, DATA_PATH_STATE_FILE, DATADIR, HEV_BIN, HEV_CONFIG, HEV2_CONFIG, IP, PIDFILE,
+    CORE_BINS, DATA_PATH_STATE_FILE, DATADIR, HEV_BIN, HEV_CONFIG, HEV2_CONFIG, IP, MODDIR, PIDFILE,
     RUN_DIR, TUN_IFACE_FILE, TUN2_IFACE_FILE, TUN2SOCKS_BIN, TUN2SOCKS_CONFIG, TUN2SOCKS_PIDFILE,
     TUN2SOCKS2_CONFIG, TUN2SOCKS2_PIDFILE, XRAY_BIN, backend_paths,
 };
@@ -571,10 +571,19 @@ impl Platform for AndroidPlatform {
     async fn capabilities(&self) -> anyhow::Result<PlatformCapabilities> {
         let xray = core_version(CoreEngine::Xray).await;
         let tun = exists("/dev/net/tun").await;
+        // Module version for the About page; empty if module.prop is unreadable.
+        let module_version = read_text(Path::new(MODDIR).join("module.prop"))
+            .await
+            .and_then(|text| {
+                text.lines()
+                    .find_map(|line| line.strip_prefix("version=").map(|v| v.trim().to_string()))
+            })
+            .unwrap_or_default();
         Ok(PlatformCapabilities {
             cores: InstalledCores { xray },
             tun,
             bridge: "ksu".into(),
+            module_version,
         })
     }
 

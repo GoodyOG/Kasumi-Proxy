@@ -12,6 +12,20 @@ use super::{default_uplink, silent};
 pub const FWMARK: u32 = 255;
 const RULE_PRIORITY: &str = "1000";
 const MARK_CHAIN: &str = "KASUMI_PROXY_MARK";
+/// Mangle PREROUTING chain that marks hotspot/tethered client traffic so it
+/// enters the TUN. Matched on input interface (`-i`), never on IP, so reply
+/// packets arriving on the WAN interface can't match (the de-NATed-reply trap
+/// that broke tethering in older versions). Hardcoded, no toggle: the `-i`
+/// wildcard rules are inert when no hotspot interface exists.
+const TETHER_CHAIN: &str = "KASUMI_PROXY_TETHER";
+/// Hotspot/tethering interface prefixes, after AsteriskNG. The `+` wildcard
+/// matches interfaces created after the rules are installed.
+const TETHER_IFACES: &[&str] = &[
+    "wlan+", "ap+", "softap+", // Wi-Fi hotspot
+    "rndis+", "usb+", "ncm+", // USB tethering
+    "bnep+", "bt-pan+", // Bluetooth tethering
+    "eth+", // Ethernet
+];
 
 // Our own route-table numbers (v4 and v6 share them).
 const TUN_TABLE: &str = "1100";
@@ -240,6 +254,98 @@ async fn local_ipv6_exclusions() {
     }
 }
 
+/// Mark tethered-client traffic in mangle PREROUTING so hotspot/USB-tethered
+/// devices go through the TUN. Rules match on input interface only: client→
+/// internet packets arrive on the hotspot iface and get marked; replies arrive
+/// on the WAN uplink and never match. Local exclusions come first so
+/// client→gateway traffic (DHCP, DNS to the phone itself) stays local.
+/// The existing `fwmark 255 → table 1100` ip rule routes marked packets into
+/// hev automatically — no new ip rules needed.
+async fn apply_tether_rules() {
+    // Rebuild the chain fresh.
+    silent(&[IPTABLES, "-t", "mangle", "-D", "PREROUTING", "-j", TETHER_CHAIN]).await;
+    silent(&[IPTABLES, "-t", "mangle", "-F", TETHER_CHAIN]).await;
+    silent(&[IPTABLES, "-t", "mangle", "-X", TETHER_CHAIN]).await;
+    silent(&[IPTABLES, "-t", "mangle", "-N", TETHER_CHAIN]).await;
+
+    // Already-marked or reply-direction packets: leave alone.
+    silent(&[
+        IPTABLES, "-t", "mangle", "-A", TETHER_CHAIN, "-m", "mark", "--mark", "255", "-j", "RETURN",
+    ])
+    .await;
+    silent(&[
+        IPTABLES, "-t", "mangle", "-A", TETHER_CHAIN,
+        "-m", "conntrack", "--ctdir", "REPLY", "-j", "RETURN",
+    ])
+    .await;
+
+    // Local destinations stay local (hotspot gateway, LAN).
+    for cidr in [
+        "127.0.0.0/8",
+        "10.0.0.0/8",
+        "172.16.0.0/12",
+        "192.168.0.0/16",
+        "169.254.0.0/16",
+        "224.0.0.0/4",
+    ] {
+        silent(&[IPTABLES, "-t", "mangle", "-A", TETHER_CHAIN, "-d", cidr, "-j", "RETURN"])
+            .await;
+    }
+
+    // Tethered client → internet: mark for the TUN.
+    for iface in TETHER_IFACES {
+        for proto in ["tcp", "udp"] {
+            silent(&[
+                IPTABLES, "-t", "mangle", "-A", TETHER_CHAIN,
+                "-i", iface, "-p", proto, "-j", "MARK", "--set-xmark", "255",
+            ])
+            .await;
+        }
+    }
+
+    silent(&[IPTABLES, "-t", "mangle", "-A", "PREROUTING", "-j", TETHER_CHAIN]).await;
+
+    // Android's TC eBPF tethering offload fast-paths tethered traffic around
+    // iptables entirely. Remove it where present so the marks above apply.
+    clear_tether_offload().await;
+}
+
+/// Best-effort removal of Android's TC ingress eBPF tethering offload, which
+/// would otherwise bypass iptables for tethered traffic. Matches AsteriskNG's
+/// approach: delete pref 1/2 where the offload program marker is present.
+async fn clear_tether_offload() {
+    for iface in TETHER_IFACES {
+        // Resolve the wildcard to concrete interfaces via /sys/class/net.
+        let prefix = iface.trim_end_matches('+');
+        let Ok(entries) = std::fs::read_dir("/sys/class/net") else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if !name.starts_with(prefix) {
+                continue;
+            }
+            // Check for the offload marker before deleting.
+            let show = tokio::process::Command::new("tc")
+                .args(["filter", "show", "dev", &name, "ingress", "protocol", "ipv6", "pref", "1"])
+                .output()
+                .await;
+            if let Ok(out) = show {
+                let stdout = String::from_utf8_lossy(&out.stdout);
+                if stdout.contains("prog_offload_schedcls_tether_") {
+                    for pref in ["1", "2"] {
+                        silent(&[
+                            "tc", "filter", "del", "dev", &name, "ingress",
+                            "protocol", "ipv6", "pref", pref,
+                        ])
+                        .await;
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// Filter-table chain holding the per-app guards (see [`guard_rules`]), hooked
 /// from `OUTPUT` and rebuilt whole whenever the data path starts or the app filter
 /// changes, so a removed app never keeps a stale rule.
@@ -408,6 +514,10 @@ pub async fn clear_routing_rules(st: &RoutingState) {
     silent(&[IPTABLES, "-t", "mangle", "-D", "OUTPUT", "-j", MARK_CHAIN]).await;
     silent(&[IPTABLES, "-t", "mangle", "-F", MARK_CHAIN]).await;
     silent(&[IPTABLES, "-t", "mangle", "-X", MARK_CHAIN]).await;
+    // Tether chain (hotspot capture)
+    silent(&[IPTABLES, "-t", "mangle", "-D", "PREROUTING", "-j", TETHER_CHAIN]).await;
+    silent(&[IPTABLES, "-t", "mangle", "-F", TETHER_CHAIN]).await;
+    silent(&[IPTABLES, "-t", "mangle", "-X", TETHER_CHAIN]).await;
     ip_rule(
         false,
         &[
@@ -614,6 +724,9 @@ pub async fn apply_external_tun_routing(st: &RoutingState) {
     silent(&[IPTABLES, "-t", "mangle", "-A", "OUTPUT", "-j", MARK_CHAIN]).await;
     silent(&[IPTABLES, "-I", "FORWARD", "-o", tun, "-j", "ACCEPT"]).await;
     silent(&[IPTABLES, "-I", "FORWARD", "-i", tun, "-j", "ACCEPT"]).await;
+
+    // Tethered (hotspot/USB) clients go through the TUN too — hardcoded, no toggle.
+    apply_tether_rules().await;
 
     // Pin local-origin traffic to the physical uplink so it doesn't loop the tun.
     if let Some(uplink) = default_uplink().await {

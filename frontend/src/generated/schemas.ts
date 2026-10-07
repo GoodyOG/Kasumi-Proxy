@@ -83,7 +83,6 @@ export const AdvancedSettings_SerializeSchema = z.object({
 	coreByProtocol: z.record(ProtocolSchema, CoreEngineSchema),
 	appCaptureMode: AppCaptureModeSchema,
 	appFilter: z.record(z.string(), AppFilterModeSchema),
-	dedupOnUpdate: z.boolean(),
 	allowNonLocalhost: z.boolean(),
 	assetAutoUpdate: z.boolean(),
 	assetUpdateInterval: z.number(),
@@ -143,7 +142,6 @@ export const AdvancedSettings_DeserializeSchema = z.object({
 	coreByProtocol: z.record(ProtocolSchema, CoreEngineSchema).optional(),
 	appCaptureMode: AppCaptureModeSchema.optional(),
 	appFilter: z.record(z.string(), AppFilterModeSchema).optional(),
-	dedupOnUpdate: z.boolean().optional(),
 	allowNonLocalhost: z.boolean().optional(),
 	assetAutoUpdate: z.boolean().optional(),
 	assetUpdateInterval: z.number().optional(),
@@ -703,6 +701,7 @@ export const CapabilitiesSchema = z.object({
 	bridge: z.string(),
 	xrayVersion: z.string(),
 	tun: z.boolean(),
+	moduleVersion: z.string(),
 });
 export type Capabilities = z.infer<typeof CapabilitiesSchema>;
 

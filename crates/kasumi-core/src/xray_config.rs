@@ -259,9 +259,8 @@ fn build_tls_security(p: &Profile) -> Value {
     if tls.reject_unknown_sni {
         m.insert("rejectUnknownSni".into(), true.into());
     }
-    if tls.enable_session_resumption {
-        m.insert("enableSessionResumption".into(), true.into());
-    }
+    // Session resumption is always on (no UI toggle): faster reconnects, harmless.
+    m.insert("enableSessionResumption".into(), true.into());
     Value::Object(m)
 }
 

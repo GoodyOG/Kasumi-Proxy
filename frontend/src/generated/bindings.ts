@@ -109,7 +109,6 @@ export type AdvancedSettings_Deserialize = {
 	coreByProtocol?: Partial<{ [key in Protocol]: CoreEngine }>,
 	appCaptureMode?: AppCaptureMode,
 	appFilter?: { [key in string]: AppFilterMode },
-	dedupOnUpdate?: boolean,
 	allowNonLocalhost?: boolean,
 	/**  Headless geosite/geoip auto-update: refresh the asset files on an interval. */
 	assetAutoUpdate?: boolean,
@@ -206,7 +205,6 @@ export type AdvancedSettings_Serialize = {
 	coreByProtocol: Partial<{ [key in Protocol]: CoreEngine }>,
 	appCaptureMode: AppCaptureMode,
 	appFilter: { [key in string]: AppFilterMode },
-	dedupOnUpdate: boolean,
 	allowNonLocalhost: boolean,
 	/**  Headless geosite/geoip auto-update: refresh the asset files on an interval. */
 	assetAutoUpdate: boolean,
@@ -369,6 +367,8 @@ export type Capabilities = {
 	xrayVersion: string,
 	/**  Whether the host can route through a TUN device. */
 	tun: boolean,
+	/**  Module version from `module.prop` (e.g. `"v0.4.8"`), empty if unreadable. */
+	moduleVersion: string,
 };
 
 /**  One client request. The tag `cmd` selects the variant; fields are its inputs. */

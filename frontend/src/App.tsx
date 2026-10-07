@@ -15,7 +15,6 @@ import { useIsWide } from "./lib/useIsWide";
 import { useTraySync } from "./lib/useTraySync";
 import { useAppStore } from "./store/useAppStore";
 
-const Backup = lazy(() => import("./features/backup/Backup"));
 const Editor = lazy(() => import("./features/editor/Editor"));
 const Logs = lazy(() => import("./features/logs/Logs"));
 const Profiles = lazy(() => import("./features/profiles/Profiles"));
@@ -54,7 +53,6 @@ export default function App() {
 
   const [tab, setTab] = useState<Tab>(getInitialTab);
   const [editorId, setEditorId] = useState<string | "new" | null>(null);
-  const [backupOpen, setBackupOpen] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
   const [appFilterOpen, setAppFilterOpen] = useState(false);
   const isWide = useIsWide();
@@ -77,7 +75,6 @@ export default function App() {
     () => ({
       go(next: Tab) {
         setEditorId(null);
-        setBackupOpen(false);
         setLogsOpen(false);
         setAppFilterOpen(false);
         setTab(next);
@@ -85,9 +82,6 @@ export default function App() {
       },
       openEditor(id: string | "new") {
         setEditorId(id);
-      },
-      openBackup() {
-        setBackupOpen(true);
       },
       openLogs() {
         setLogsOpen(true);
@@ -109,19 +103,15 @@ export default function App() {
     { id: "settings", icon: "tune", labelKey: "nav.settings" },
   ];
   const nativeToast = hasKsuNativeApi();
-  const navVisible = !editorId && !backupOpen && !logsOpen && !appFilterOpen;
+  const navVisible = !editorId && !logsOpen && !appFilterOpen;
   const loadingScreen = <LoadingScreen label={t("app.loading")} />;
   const currentScreen =
     tab === "overview" ? (
-      <Overview onNavigate={nav.go} onOpenLogs={nav.openLogs} onOpenBackup={nav.openBackup} />
+      <Overview onNavigate={nav.go} onOpenLogs={nav.openLogs} />
     ) : tab === "profiles" ? (
       <Profiles onOpenEditor={nav.openEditor} />
     ) : (
-      <Settings
-        onOpenBackup={nav.openBackup}
-        onOpenLogs={nav.openLogs}
-        onOpenAppFilter={nav.openAppFilter}
-      />
+      <Settings onOpenLogs={nav.openLogs} onOpenAppFilter={nav.openAppFilter} />
     );
 
   return (
@@ -171,11 +161,6 @@ export default function App() {
       {editorId && (
         <Suspense fallback={null}>
           <Editor profileId={editorId} onClose={() => setEditorId(null)} />
-        </Suspense>
-      )}
-      {backupOpen && (
-        <Suspense fallback={null}>
-          <Backup onClose={() => setBackupOpen(false)} />
         </Suspense>
       )}
       {logsOpen && (

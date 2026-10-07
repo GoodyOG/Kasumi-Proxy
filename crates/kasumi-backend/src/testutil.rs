@@ -100,6 +100,7 @@ impl Platform for TestPlatform {
             },
             tun: true,
             bridge: "test".into(),
+            module_version: "v0.0.0-test".into(),
         })
     }
     fn core_path(&self, engine: Engine) -> PathBuf {

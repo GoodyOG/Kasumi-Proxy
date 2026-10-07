@@ -537,7 +537,6 @@ export const DEFAULT_ADVANCED_SETTINGS = {
   "autoStart": true,
   "connectivityCheck": true,
   "coreByProtocol": {},
-  "dedupOnUpdate": false,
   "dnsViaProxy": true,
   "domainSniffing": true,
   "domainStrategy": "IPIfNonMatch",

@@ -70,6 +70,7 @@ impl Platform for StubPlatform {
             cores: InstalledCores::default(),
             tun: true,
             bridge: "ksu".into(),
+            module_version: String::new(),
         })
     }
     fn core_path(&self, _engine: Engine) -> PathBuf {

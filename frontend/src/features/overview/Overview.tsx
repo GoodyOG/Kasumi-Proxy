@@ -21,16 +21,13 @@ import { isServiceUp } from "../../lib/bridge";
 import { formatRate, formatUptime } from "../../lib/format";
 import { profileEndpointLabel } from "../../lib/profile-utils";
 import { useAppStore } from "../../store/useAppStore";
-import { PingActionsSheet } from "../profiles/PingActionsSheet";
 
 export default function Overview({
   onNavigate,
   onOpenLogs,
-  onOpenBackup,
 }: {
   onNavigate: (screen: "overview" | "profiles" | "settings") => void;
   onOpenLogs: () => void;
-  onOpenBackup: () => void;
 }) {
   const profiles = useAppStore((s) => s.profiles);
   const groups = useAppStore((s) => s.groups);
@@ -44,13 +41,8 @@ export default function Overview({
   const busy = useAppStore((s) => s.busy);
   const toggleService = useAppStore((s) => s.toggleService);
   const restart = useAppStore((s) => s.restart);
-  const testAll = useAppStore((s) => s.testAll);
   const pinging = useAppStore((s) => s.pinging);
   const probeActive = useAppStore((s) => s.probeActive);
-  const speedTesting = useAppStore((s) => s.speedTesting);
-  const removeUnreachable = useAppStore((s) => s.removeUnreachable);
-  const selectBest = useAppStore((s) => s.selectBest);
-  const [pingSheetOpen, setPingSheetOpen] = useState(false);
   const t = useT();
 
   const recentActivity = useAppStore((s) => s.recentActivity);
@@ -280,39 +272,6 @@ export default function Overview({
           />
         </div>
 
-        <SectionLabel>{t("overview.quickActions")}</SectionLabel>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <QuickAction
-            icon="dns"
-            label={t("overview.openProfiles")}
-            onClick={() => onNavigate("profiles")}
-          />
-          <QuickAction
-            icon="speed"
-            label={t("overview.pingAll")}
-            onClick={() => setPingSheetOpen(true)}
-          />
-          <QuickAction icon="backup" label={t("overview.backupRestore")} onClick={onOpenBackup} />
-        </div>
-        <PingActionsSheet
-          open={pingSheetOpen}
-          onClose={() => setPingSheetOpen(false)}
-          pinging={pinging.size > 0}
-          speedTesting={speedTesting.size > 0}
-          onTestAll={(kind) => {
-            void testAll(kind);
-            setPingSheetOpen(false);
-          }}
-          onDeleteUnreachable={() => {
-            void removeUnreachable();
-            setPingSheetOpen(false);
-          }}
-          onSelectBest={() => {
-            selectBest();
-            setPingSheetOpen(false);
-          }}
-        />
-
         <SectionLabel>{t("overview.recentActivity")}</SectionLabel>
         {recentActivity.length > 0 && (
           <Card style={{ padding: "4px 14px" }}>
@@ -428,40 +387,6 @@ function Counter({
       <Icon name={icon} style={{ fontSize: 20, color: "var(--primary)" }} />
       <div style={{ fontSize: 26, fontWeight: 700, marginTop: 6, lineHeight: 1 }}>{n}</div>
       <div style={{ fontSize: 12, color: "var(--on-surface-variant)", marginTop: 3 }}>{label}</div>
-    </Card>
-  );
-}
-
-function QuickAction({
-  icon,
-  label,
-  onClick,
-}: {
-  icon: string;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <Card
-      onClick={onClick}
-      style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 12, padding: 14 }}
-    >
-      <div
-        style={{
-          width: 38,
-          height: 38,
-          borderRadius: 11,
-          background: "var(--primary-container)",
-          color: "var(--on-primary-container)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flex: "0 0 auto",
-        }}
-      >
-        <Icon name={icon} style={{ fontSize: 20 }} />
-      </div>
-      <span style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.25 }}>{label}</span>
     </Card>
   );
 }

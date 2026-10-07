@@ -30,11 +30,9 @@ const RoutingRulesIOSheet = lazy(() =>
 );
 
 export default function Settings({
-  onOpenBackup,
   onOpenLogs,
   onOpenAppFilter,
 }: {
-  onOpenBackup: () => void;
   onOpenLogs: () => void;
   onOpenAppFilter: () => void;
 }) {
@@ -160,19 +158,14 @@ export default function Settings({
       case "app":
         return (
           <>
-            <SystemSection
-              settings={settings}
-              set={set}
-              onOpenBackup={onOpenBackup}
-              onOpenLogs={onOpenLogs}
-            />
+            <SystemSection settings={settings} set={set} onOpenLogs={onOpenLogs} />
             <AdvancedSection settings={settings} set={set} />
           </>
         );
       case "about":
         return (
           <>
-            <AboutSection />
+            <AboutSection moduleVersion={caps?.moduleVersion} />
             <DiagnosticsSection
               bridgeMode={bridgeMode}
               xrayVersion={caps?.xrayVersion ?? ""}

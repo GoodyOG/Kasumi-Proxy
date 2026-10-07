@@ -112,6 +112,8 @@ pub struct Capabilities {
     pub xray_version: String,
     /// Whether the host can route through a TUN device.
     pub tun: bool,
+    /// Module version from `module.prop` (e.g. `"v0.4.8"`), empty if unreadable.
+    pub module_version: String,
 }
 
 /// One WS RPC call (client → daemon).

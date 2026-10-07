@@ -5,7 +5,7 @@
 # and stage them as the Magisk module payload:
 #
 #   fetch-binaries.sh android
-#     → module/bin/{arm64-v8a,x86_64}/<binary>
+#     → module/bin/arm64-v8a/<binary>  (arm64 only)
 #
 # The prebuilt cores' release-asset layout is read from scripts/binaries.json (the
 # single source of truth, shared with update-binary-hashes.sh); versions come from
@@ -91,8 +91,8 @@ CORES="xray tun2socks hev-socks5-tunnel"
 fetch_android() {
 	local out="$ROOT/module/bin"
 	echo "→ android binaries → module/bin/"
-	# abi (module dir) : catalog arch.
-	for pair in "arm64-v8a:android-arm64" "x86_64:android-amd64"; do
+	# abi (module dir) : catalog arch. arm64 only — x86_64 dropped (no x86 devices in use).
+	for pair in "arm64-v8a:android-arm64"; do
 		local abi="${pair%%:*}" arch="${pair#*:}"
 		mkdir -p "$out/$abi"
 		for core in $CORES; do
@@ -101,7 +101,7 @@ fetch_android() {
 		chmod 755 "$out/$abi"/xray "$out/$abi"/tun2socks "$out/$abi"/hev-socks5-tunnel
 	done
 	echo "✅ module/bin/ populated:"
-	for abi in arm64-v8a x86_64; do
+	for abi in arm64-v8a; do
 		for core in $CORES; do
 			local f="$out/$abi/$core"
 			[ -f "$f" ] && printf '   %-22s %s\n' "$abi/$core" "$(du -h "$f" | cut -f1)" || echo "   ⚠️  missing: $abi/$core"

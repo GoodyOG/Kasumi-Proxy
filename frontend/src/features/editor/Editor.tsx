@@ -8,15 +8,7 @@
 
 import { useEffect, useState } from "react";
 import { Btn, Sheet } from "../../components";
-import type {
-  CoreResolution,
-  Endpoint,
-  Meta,
-  Profile,
-  Protocol,
-  Tls,
-  Transport,
-} from "../../generated/bindings";
+import type { Endpoint, Meta, Profile, Protocol, Tls, Transport } from "../../generated/bindings";
 import { useT } from "../../i18n";
 import { bridge } from "../../lib/bridge-provider";
 import { emptyProfile, schemaFor } from "../../lib/profile-utils";
@@ -100,35 +92,6 @@ export default function Editor({
     };
   }, [draft]);
 
-  // The core-resolution matrix lives in Rust too; resolve the draft's engine
-  // through the bridge on every edit (same pattern as the share preview). `null`
-  // until the first reply lands, which just hides the engine hint.
-  const [coreResolution, setCoreResolution] = useState<CoreResolution | null>(null);
-  useEffect(() => {
-    let alive = true;
-    bridge
-      .resolveCores([draft])
-      .then((rs) => alive && setCoreResolution(rs[0] ?? null))
-      .catch(() => alive && setCoreResolution(null));
-    return () => {
-      alive = false;
-    };
-  }, [draft]);
-
-  // Which profiles the draft may dial through is a backend answer (the same chain
-  // check the config builders make), re-asked on every edit like the engine.
-  const [viaIds, setViaIds] = useState<string[]>([]);
-  useEffect(() => {
-    let alive = true;
-    bridge
-      .chainCandidates(draft)
-      .then((ids) => alive && setViaIds(ids))
-      .catch(() => alive && setViaIds([]));
-    return () => {
-      alive = false;
-    };
-  }, [draft]);
-
   const save = () => {
     const result = schemaFor(draft.protocol).safeParse(draft);
     if (!result.success) {
@@ -145,10 +108,6 @@ export default function Editor({
   };
 
   const groupOpts = groups.map((group) => ({ value: group.id, label: group.name }));
-  const viaOpts = viaIds.flatMap((id) => {
-    const hop = profiles.find((p) => p.meta.id === id);
-    return hop ? [{ value: id, label: hop.meta.remarks }] : [];
-  });
   const proto = draft.protocol;
   const security = "tls" in draft && draft.tls ? (draft.tls.security ?? "none") : "none";
   const isReality = security === "reality";
@@ -156,12 +115,6 @@ export default function Editor({
   const isQuic = proto === "hysteria2" || proto === "tuic";
   const network = "transport" in draft && draft.transport ? draft.transport.kind : "tcp";
   const needsHostPath = ["ws", "grpc", "httpupgrade", "xhttp", "h2"].includes(network);
-  const engineForced = coreResolution?.forced ?? null;
-  const engineHint = engineForced
-    ? t("editor.engineForced", { core: engineForced })
-    : coreResolution
-      ? t("editor.engineResolved", { core: coreResolution.resolved })
-      : "";
   const mux = "muxEnabled" in draft ? !!draft.muxEnabled : false;
 
   return (
@@ -181,10 +134,7 @@ export default function Editor({
         setEndpoint={setEndpoint}
         errors={errors}
         groupOpts={groupOpts}
-        viaOpts={viaOpts}
         changeProtocol={changeProtocol}
-        engineForced={engineForced}
-        engineHint={engineHint}
       />
 
       <CredentialsSection draft={draft} setRoot={setRoot} errors={errors} />

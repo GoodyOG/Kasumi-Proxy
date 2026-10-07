@@ -263,7 +263,6 @@ pub struct AdvancedSettings {
     pub core_by_protocol: BTreeMap<Protocol, CoreEngine>,
     pub app_capture_mode: AppCaptureMode,
     pub app_filter: BTreeMap<String, AppFilterMode>,
-    pub dedup_on_update: bool,
     pub allow_non_localhost: bool,
     // ---- Geo asset auto-update ----
     /// Headless geosite/geoip auto-update: refresh the asset files on an interval.
@@ -341,7 +340,6 @@ impl Default for AdvancedSettings {
             core_by_protocol: BTreeMap::new(),
             app_capture_mode: AppCaptureMode::All,
             app_filter: BTreeMap::new(),
-            dedup_on_update: false,
             allow_non_localhost: false,
             asset_auto_update: false,
             asset_update_interval: DEFAULT_ASSET_UPDATE_INTERVAL,

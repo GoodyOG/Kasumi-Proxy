@@ -165,6 +165,7 @@ export const mockBridge: Bridge = {
       bridge: "mock",
       xrayVersion: "Xray (mock)",
       tun: false,
+      moduleVersion: "v0.0.0-mock",
     };
   },
 

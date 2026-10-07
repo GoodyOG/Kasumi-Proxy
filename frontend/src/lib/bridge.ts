@@ -165,5 +165,6 @@ export function parseCapabilities(value: unknown): Capabilities {
     bridge: typeof s.bridge === "string" ? s.bridge : "",
     xrayVersion: typeof s.xrayVersion === "string" ? s.xrayVersion : "",
     tun: s.tun === true || s.tun === 1 || s.tun === "1",
+    moduleVersion: typeof s.moduleVersion === "string" ? s.moduleVersion : "",
   };
 }

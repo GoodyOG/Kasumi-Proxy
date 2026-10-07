@@ -13,7 +13,7 @@ type Status = "idle" | "checking" | "uptodate" | "available" | "downloading" | "
 
 /** Desktop-only version + auto-update controls. Android is updated by the root
  * manager, so this renders nothing where the updater isn't supported. */
-export function AboutSection() {
+export function AboutSection({ moduleVersion }: { moduleVersion?: string }) {
   const t = useT();
   const [version, setVersion] = useState("");
   const [update, setUpdate] = useState<Update | null>(null);
@@ -39,7 +39,18 @@ export function AboutSection() {
     void runCheck();
   }, [runCheck]);
 
-  if (!updateSupported()) return null;
+  if (!updateSupported()) {
+    // Android: no auto-update, just show the module version from the daemon.
+    if (!moduleVersion) return null;
+    return (
+      <>
+        <SectionLabel>{t("settings.about")}</SectionLabel>
+        <Card style={{ padding: "4px 14px" }}>
+          <ListRow icon="info" title={t("settings.appVersion")} sub={moduleVersion} />
+        </Card>
+      </>
+    );
+  }
 
   async function doInstall() {
     if (!update) return;

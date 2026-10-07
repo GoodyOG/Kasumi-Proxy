@@ -247,6 +247,7 @@ pub async fn dispatch(platform: &dyn Platform, cmd: Command) -> Result<Response,
                 bridge: c.bridge,
                 xray_version: c.cores.xray.unwrap_or_default(),
                 tun: c.tun,
+                module_version: c.module_version,
             }))
         }
 

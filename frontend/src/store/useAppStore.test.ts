@@ -1,12 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Profile } from "../generated/bindings";
-import type {
-  AdvancedSettings,
-  AppState,
-  Bridge,
-  LogTarget,
-  ServiceStatus,
-} from "../lib/bridge";
+import type { AdvancedSettings, AppState, Bridge, LogTarget, ServiceStatus } from "../lib/bridge";
 import { emptyProfile } from "../lib/profile-utils";
 
 type Vless = Extract<Profile, { protocol: "vless" }>;
@@ -104,6 +98,7 @@ function createBridgeMock(): BridgeMock {
       bridge: "mock",
       xrayVersion: "",
       tun: false,
+      moduleVersion: "",
     })),
     listApps: vi.fn(async () => []),
     reloadAppFilter: vi.fn(async () => ({ ok: true })),

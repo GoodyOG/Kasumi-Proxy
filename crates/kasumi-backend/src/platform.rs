@@ -102,6 +102,8 @@ pub struct PlatformCapabilities {
     pub tun: bool,
     /// UI-runtime tag for this host (e.g. `"ksu"` on Android, `"desktop"` elsewhere).
     pub bridge: String,
+    /// Module version from `module.prop` (e.g. `"v0.4.8"`), empty if unreadable.
+    pub module_version: String,
 }
 
 /// One app in the per-app filter list. On Android a package and its uid (matched by
@@ -326,6 +328,7 @@ mod tests {
                 cores: InstalledCores::default(),
                 tun: false,
                 bridge: "stub".into(),
+                module_version: String::new(),
             })
         }
         fn core_path(&self, _engine: Engine) -> PathBuf {

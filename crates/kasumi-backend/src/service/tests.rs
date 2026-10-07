@@ -104,6 +104,7 @@ impl Platform for RecordingPlatform {
             },
             tun: true,
             bridge: "test".into(),
+            module_version: "v0.0.0-test".into(),
         })
     }
     fn core_path(&self, _engine: Engine) -> PathBuf {

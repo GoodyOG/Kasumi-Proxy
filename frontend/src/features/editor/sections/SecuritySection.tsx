@@ -108,27 +108,6 @@ export function SecuritySection({
               onChange={(value) => setTls({ allowInsecure: value })}
             />
           </SettingRow>
-          <SettingRow title={t("editor.tlsDisableSni")}>
-            <Switch on={!!tls.disableSni} onChange={(value) => setTls({ disableSni: value })} />
-          </SettingRow>
-          <SettingRow title={t("editor.tlsDisableSystemRoot")}>
-            <Switch
-              on={!!tls.disableSystemRoot}
-              onChange={(value) => setTls({ disableSystemRoot: value })}
-            />
-          </SettingRow>
-          <SettingRow title={t("editor.tlsRejectUnknownSni")}>
-            <Switch
-              on={!!tls.rejectUnknownSni}
-              onChange={(value) => setTls({ rejectUnknownSni: value })}
-            />
-          </SettingRow>
-          <SettingRow title={t("editor.tlsEnableSessionResumption")}>
-            <Switch
-              on={!!tls.enableSessionResumption}
-              onChange={(value) => setTls({ enableSessionResumption: value })}
-            />
-          </SettingRow>
         </>
       )}
       {isReality && (
