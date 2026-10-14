@@ -279,7 +279,11 @@ async fn apply_tether_rules() {
     ])
     .await;
 
-    // Local destinations stay local (hotspot gateway, LAN).
+    // Local destinations stay local (hotspot gateway, LAN). The limited
+    // broadcast MUST be excluded: DHCP DISCOVER/OFFER are UDP broadcasts to
+    // 255.255.255.255, and without this they get marked into the TUN and die —
+    // tethered clients never get an IP (hotspot dead) and the phone's own
+    // Wi-Fi DHCP breaks the same way. (v0.4.9–v0.4.11 regression.)
     for cidr in [
         "127.0.0.0/8",
         "10.0.0.0/8",
@@ -287,9 +291,20 @@ async fn apply_tether_rules() {
         "192.168.0.0/16",
         "169.254.0.0/16",
         "224.0.0.0/4",
+        "255.255.255.255/32",
     ] {
-        silent(&[IPTABLES, "-t", "mangle", "-A", TETHER_CHAIN, "-d", cidr, "-j", "RETURN"])
-            .await;
+        silent(&[
+            IPTABLES,
+            "-t",
+            "mangle",
+            "-A",
+            TETHER_CHAIN,
+            "-d",
+            cidr,
+            "-j",
+            "RETURN",
+        ])
+        .await;
     }
 
     // Tethered client → internet: mark for the TUN (fwmark 1 → table 1100).
